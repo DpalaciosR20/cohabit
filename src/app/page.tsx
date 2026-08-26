@@ -45,9 +45,14 @@ export default async function Home() {
               {membership.household.inviteCode}
             </code>
           </p>
-          <Link href="/shopping-list" className="rounded bg-black px-4 py-2 text-white">
-            Lista de compras
-          </Link>
+          <div className="flex gap-3">
+            <Link href="/shopping-list" className="rounded bg-black px-4 py-2 text-white">
+              Lista de compras
+            </Link>
+            <Link href="/expenses" className="rounded border px-4 py-2">
+              Gastos
+            </Link>
+          </div>
         </div>
       ) : (
         <Link href="/household" className="rounded bg-black px-4 py-2 text-white">
