@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createExpenseSchema } from "./expense";
+import { createExpenseSchema, updateExpenseSchema } from "./expense";
 
 describe("createExpenseSchema", () => {
   it("accepts a valid expense", () => {
@@ -31,5 +31,16 @@ describe("createExpenseSchema", () => {
       amount: 10_000_000,
     });
     expect(result.success).toBe(false);
+  });
+});
+
+describe("updateExpenseSchema", () => {
+  it("validates edits with the same rules as creation", () => {
+    expect(
+      updateExpenseSchema.safeParse({ description: "Corrección", amount: 30 }).success
+    ).toBe(true);
+    expect(
+      updateExpenseSchema.safeParse({ description: "Corrección", amount: 0 }).success
+    ).toBe(false);
   });
 });

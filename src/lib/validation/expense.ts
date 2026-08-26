@@ -9,3 +9,7 @@ export const createExpenseSchema = z.object({
 });
 
 export type CreateExpenseInput = z.infer<typeof createExpenseSchema>;
+
+export const updateExpenseSchema = createExpenseSchema;
+
+export type UpdateExpenseInput = z.infer<typeof updateExpenseSchema>;

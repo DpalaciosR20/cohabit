@@ -107,26 +107,133 @@ export function ExpensesView({
       ) : (
         <ul className="flex flex-col gap-3">
           {expenses.map((expense) => (
-            <li key={expense.id} className="rounded border px-4 py-3">
-              <div className="flex items-baseline justify-between">
-                <p className="font-medium">{expense.description}</p>
-                <p className="font-medium">{formatMoney(expense.amount)}</p>
-              </div>
-              <p className="text-xs text-zinc-500">
-                Pagado por {expense.paidBy.name} ·{" "}
-                {new Date(expense.date).toLocaleDateString()}
-              </p>
-              <ul className="mt-2 flex flex-col gap-0.5 text-xs text-zinc-600">
-                {expense.splits.map((split) => (
-                  <li key={split.userId}>
-                    {split.user.name}: {formatMoney(split.shareAmount)}
-                  </li>
-                ))}
-              </ul>
-            </li>
+            <ExpenseRow key={expense.id} expense={expense} onChanged={loadExpenses} />
           ))}
         </ul>
       )}
     </main>
+  );
+}
+
+function ExpenseRow({
+  expense,
+  onChanged,
+}: {
+  expense: Expense;
+  onChanged: () => Promise<void>;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [description, setDescription] = useState(expense.description);
+  const [amount, setAmount] = useState(expense.amount);
+  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  async function handleSave(event: FormEvent) {
+    event.preventDefault();
+    setError(null);
+    setIsSaving(true);
+
+    try {
+      const res = await fetch(`/api/expenses/${expense.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description, amount: Number(amount) }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error ?? "No se pudo guardar el cambio");
+        return;
+      }
+
+      setIsEditing(false);
+      await onChanged();
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!confirm(`¿Eliminar el gasto "${expense.description}"?`)) return;
+    await fetch(`/api/expenses/${expense.id}`, { method: "DELETE" });
+    await onChanged();
+  }
+
+  if (isEditing) {
+    return (
+      <li className="rounded border px-4 py-3">
+        <form onSubmit={handleSave} className="flex flex-col gap-2">
+          <input
+            className="rounded border px-3 py-2"
+            type="text"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            required
+          />
+          <input
+            className="rounded border px-3 py-2"
+            type="number"
+            step="0.01"
+            min="0.01"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            required
+          />
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="rounded bg-black px-3 py-1.5 text-sm text-white disabled:opacity-50"
+            >
+              {isSaving ? "Guardando…" : "Guardar"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsEditing(false)}
+              className="rounded border px-3 py-1.5 text-sm"
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </li>
+    );
+  }
+
+  return (
+    <li className="rounded border px-4 py-3">
+      <div className="flex items-baseline justify-between">
+        <p className="font-medium">{expense.description}</p>
+        <p className="font-medium">{formatMoney(expense.amount)}</p>
+      </div>
+      <p className="text-xs text-zinc-500">
+        Pagado por {expense.paidBy.name} ·{" "}
+        {new Date(expense.date).toLocaleDateString()}
+      </p>
+      <ul className="mt-2 flex flex-col gap-0.5 text-xs text-zinc-600">
+        {expense.splits.map((split) => (
+          <li key={split.userId}>
+            {split.user.name}: {formatMoney(split.shareAmount)}
+          </li>
+        ))}
+      </ul>
+      <div className="mt-2 flex gap-3 text-xs">
+        <button
+          type="button"
+          onClick={() => setIsEditing(true)}
+          className="text-zinc-500 hover:text-black"
+        >
+          Editar
+        </button>
+        <button
+          type="button"
+          onClick={handleDelete}
+          className="text-zinc-500 hover:text-red-600"
+        >
+          Eliminar
+        </button>
+      </div>
+    </li>
   );
 }
