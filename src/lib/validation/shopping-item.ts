@@ -7,8 +7,14 @@ export const createShoppingItemSchema = z.object({
 
 export type CreateShoppingItemInput = z.infer<typeof createShoppingItemSchema>;
 
-export const updateShoppingItemSchema = z.object({
-  isPurchased: z.boolean(),
-});
+export const updateShoppingItemSchema = z
+  .object({
+    isPurchased: z.boolean().optional(),
+    name: z.string().trim().min(1, "El nombre es requerido").max(100).optional(),
+    quantity: z.number().int().min(1).max(999).optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "No hay nada que actualizar",
+  });
 
 export type UpdateShoppingItemInput = z.infer<typeof updateShoppingItemSchema>;

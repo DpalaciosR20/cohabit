@@ -106,42 +106,135 @@ export function ShoppingListView({ householdName }: { householdName: string }) {
       ) : (
         <ul className="flex flex-col gap-2">
           {items.map((item) => (
-            <li
+            <ShoppingListItemRow
               key={item.id}
-              className="flex items-center gap-3 rounded border px-3 py-2"
-            >
-              <input
-                type="checkbox"
-                checked={item.isPurchased}
-                onChange={() => togglePurchased(item)}
-              />
-              <div className="flex-1">
-                <p
-                  className={
-                    item.isPurchased ? "text-zinc-400 line-through" : ""
-                  }
-                >
-                  {item.name}
-                  {item.quantity > 1 ? ` ×${item.quantity}` : ""}
-                </p>
-                <p className="text-xs text-zinc-500">
-                  {item.isPurchased && item.purchasedBy
-                    ? `Comprado por ${item.purchasedBy.name}`
-                    : `Agregado por ${item.addedBy.name}`}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => removeItem(item.id)}
-                aria-label={`Eliminar ${item.name}`}
-                className="text-sm text-zinc-400 hover:text-red-600"
-              >
-                ✕
-              </button>
-            </li>
+              item={item}
+              onTogglePurchased={() => togglePurchased(item)}
+              onRemove={() => removeItem(item.id)}
+              onChanged={loadItems}
+            />
           ))}
         </ul>
       )}
     </main>
+  );
+}
+
+function ShoppingListItemRow({
+  item,
+  onTogglePurchased,
+  onRemove,
+  onChanged,
+}: {
+  item: ShoppingItem;
+  onTogglePurchased: () => void;
+  onRemove: () => void;
+  onChanged: () => Promise<void>;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [name, setName] = useState(item.name);
+  const [quantity, setQuantity] = useState(String(item.quantity));
+  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  async function handleSave(event: FormEvent) {
+    event.preventDefault();
+    setError(null);
+    setIsSaving(true);
+
+    try {
+      const res = await fetch(`/api/shopping-items/${item.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, quantity: Number(quantity) }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error ?? "No se pudo guardar el cambio");
+        return;
+      }
+
+      setIsEditing(false);
+      await onChanged();
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  if (isEditing) {
+    return (
+      <li className="rounded border px-3 py-2">
+        <form onSubmit={handleSave} className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <input
+              className="flex-1 rounded border px-3 py-2"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+            <input
+              className="w-20 rounded border px-3 py-2"
+              type="number"
+              min="1"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+              required
+            />
+          </div>
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="rounded bg-black px-3 py-1.5 text-sm text-white disabled:opacity-50"
+            >
+              {isSaving ? "Guardando…" : "Guardar"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsEditing(false)}
+              className="rounded border px-3 py-1.5 text-sm"
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </li>
+    );
+  }
+
+  return (
+    <li className="flex items-center gap-3 rounded border px-3 py-2">
+      <input type="checkbox" checked={item.isPurchased} onChange={onTogglePurchased} />
+      <div className="flex-1">
+        <p className={item.isPurchased ? "text-zinc-400 line-through" : ""}>
+          {item.name}
+          {item.quantity > 1 ? ` ×${item.quantity}` : ""}
+        </p>
+        <p className="text-xs text-zinc-500">
+          {item.isPurchased && item.purchasedBy
+            ? `Comprado por ${item.purchasedBy.name}`
+            : `Agregado por ${item.addedBy.name}`}
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={() => setIsEditing(true)}
+        aria-label={`Editar ${item.name}`}
+        className="text-sm text-zinc-400 hover:text-black"
+      >
+        Editar
+      </button>
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label={`Eliminar ${item.name}`}
+        className="text-sm text-zinc-400 hover:text-red-600"
+      >
+        ✕
+      </button>
+    </li>
   );
 }

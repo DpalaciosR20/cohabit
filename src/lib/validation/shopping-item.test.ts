@@ -37,8 +37,23 @@ describe("updateShoppingItemSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("rejects a missing isPurchased", () => {
+  it("accepts editing the name and quantity", () => {
+    const result = updateShoppingItemSchema.safeParse({ name: "Leche deslactosada", quantity: 2 });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects an empty object (nothing to update)", () => {
     const result = updateShoppingItemSchema.safeParse({});
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects an empty name on edit", () => {
+    const result = updateShoppingItemSchema.safeParse({ name: "  " });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a quantity below 1 on edit", () => {
+    const result = updateShoppingItemSchema.safeParse({ quantity: 0 });
     expect(result.success).toBe(false);
   });
 });
