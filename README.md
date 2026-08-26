@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Cohabit
 
-## Getting Started
+Cohabit is a shared home-management app for couples/roommates: a shared shopping list, expense tracking with flexible splits, real-time sync between household members, and monthly budgets.
 
-First, run the development server:
+Built as a learning project to practice full-stack engineering with an agile workflow — from product backlog to deployment — using modern, production-grade tooling.
+
+## Status
+
+🚧 In active development — MVP in progress.
+
+## Tech stack
+
+- **Frontend:** Next.js (App Router) + React + TypeScript + Tailwind CSS
+- **Backend:** Next.js Route Handlers
+- **Database:** PostgreSQL
+- **ORM:** Prisma
+- **Auth:** Auth.js (NextAuth)
+- **Realtime:** Supabase Realtime / WebSockets
+- **Testing:** Vitest + React Testing Library
+- **Hosting:** Vercel (app) + Prisma Postgres / Neon (database)
+
+## Getting started
 
 ```bash
+npm install
+npx prisma dev        # starts a local Postgres instance
+npx prisma migrate dev
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command | Description |
+|---|---|
+| `npm run dev` | Start the development server |
+| `npm run build` | Build for production |
+| `npm run lint` | Run ESLint |
+| `npm test` | Run the test suite once |
+| `npm run test:watch` | Run tests in watch mode |
 
-## Learn More
+## Data model
 
-To learn more about Next.js, take a look at the following resources:
+See [`prisma/schema.prisma`](prisma/schema.prisma) for the full schema: `User`, `Household`, `HouseholdMember`, `ShoppingList`/`ShoppingItem`, `Expense`/`ExpenseSplit`, `Category`, `Budget`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Roadmap
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+MVP scope, tracked as GitHub issues:
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [ ] Auth & household creation/joining
+- [ ] Shared shopping list (real-time)
+- [ ] Expense tracking with flexible splits
+- [ ] Balance / "who owes who" view
+- [ ] Monthly budgets per category
