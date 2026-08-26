@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireHouseholdMember } from "@/lib/require-household";
 import { updateShoppingItemSchema } from "@/lib/validation/shopping-item";
@@ -36,11 +37,20 @@ export async function PATCH(
     return NextResponse.json({ error: "Item no encontrado" }, { status: 404 });
   }
 
+  const data: Prisma.ShoppingItemUpdateInput = {};
+  if (parsed.data.name !== undefined) data.name = parsed.data.name;
+  if (parsed.data.quantity !== undefined) data.quantity = parsed.data.quantity;
+  if (parsed.data.isPurchased !== undefined) {
+    data.isPurchased = parsed.data.isPurchased;
+    data.purchasedBy = parsed.data.isPurchased
+      ? { connect: { id: context.userId } }
+      : { disconnect: true };
+    data.purchasedAt = parsed.data.isPurchased ? new Date() : null;
+  }
+
   const item = await prisma.shoppingItem.update({
     where: { id },
-    data: parsed.data.isPurchased
-      ? { isPurchased: true, purchasedById: context.userId, purchasedAt: new Date() }
-      : { isPurchased: false, purchasedById: null, purchasedAt: null },
+    data,
     include: {
       addedBy: { select: { id: true, name: true } },
       purchasedBy: { select: { id: true, name: true } },
