@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRealtimeRefetch } from "@/lib/use-realtime-refetch";
 
 type MemberBalance = { userId: string; name: string; balance: number };
 
@@ -20,9 +21,11 @@ function describe(balance: number, name: string, currentUserId: string, userId: 
 
 export function BalanceView({
   householdName,
+  householdId,
   currentUserId,
 }: {
   householdName: string;
+  householdId: string;
   currentUserId: string;
 }) {
   const [balances, setBalances] = useState<MemberBalance[]>([]);
@@ -34,6 +37,10 @@ export function BalanceView({
     setBalances(data.balances ?? []);
     setIsLoading(false);
   }
+
+  // El balance se deriva de los gastos, así que basta con escuchar cambios en
+  // Expense para saber cuándo recalcular.
+  useRealtimeRefetch("Expense", `householdId=eq.${householdId}`, loadBalances);
 
   useEffect(() => {
     // Carga inicial al montar (no estado derivado de props/estado existente).

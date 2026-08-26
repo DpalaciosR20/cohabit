@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { useRealtimeRefetch } from "@/lib/use-realtime-refetch";
 
 type ShoppingItem = {
   id: string;
@@ -13,6 +14,7 @@ type ShoppingItem = {
 
 export function ShoppingListView({ householdName }: { householdName: string }) {
   const [items, setItems] = useState<ShoppingItem[]>([]);
+  const [listId, setListId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -21,6 +23,7 @@ export function ShoppingListView({ householdName }: { householdName: string }) {
     const res = await fetch("/api/shopping-items");
     const data = await res.json();
     setItems(data.items ?? []);
+    setListId(data.listId ?? null);
     setIsLoading(false);
   }
 
@@ -30,6 +33,14 @@ export function ShoppingListView({ householdName }: { householdName: string }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadItems();
   }, []);
+
+  // Cuando conocemos el listId, escuchamos cambios en tiempo real de esa lista
+  // (ej. tu pareja agrega o tacha un item) y recargamos automáticamente.
+  useRealtimeRefetch(
+    "ShoppingItem",
+    listId ? `listId=eq.${listId}` : null,
+    loadItems
+  );
 
   async function handleAdd(event: FormEvent) {
     event.preventDefault();

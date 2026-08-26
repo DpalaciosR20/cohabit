@@ -15,6 +15,10 @@ export default async function BalancePage() {
   }
 
   return (
-    <BalanceView householdName={membership.household.name} currentUserId={session.user.id} />
+    <BalanceView
+      householdName={membership.household.name}
+      householdId={membership.householdId}
+      currentUserId={session.user.id}
+    />
   );
 }

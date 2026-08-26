@@ -14,5 +14,10 @@ export default async function ExpensesPage() {
     redirect("/household");
   }
 
-  return <ExpensesView householdName={membership.household.name} />;
+  return (
+    <ExpensesView
+      householdName={membership.household.name}
+      householdId={membership.householdId}
+    />
+  );
 }

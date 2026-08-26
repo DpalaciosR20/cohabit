@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { useRealtimeRefetch } from "@/lib/use-realtime-refetch";
 
 type Expense = {
   id: string;
@@ -15,7 +16,13 @@ function formatMoney(value: string) {
   return `$${Number(value).toFixed(2)}`;
 }
 
-export function ExpensesView({ householdName }: { householdName: string }) {
+export function ExpensesView({
+  householdName,
+  householdId,
+}: {
+  householdName: string;
+  householdId: string;
+}) {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [description, setDescription] = useState("");
@@ -28,6 +35,8 @@ export function ExpensesView({ householdName }: { householdName: string }) {
     setExpenses(data.expenses ?? []);
     setIsLoading(false);
   }
+
+  useRealtimeRefetch("Expense", `householdId=eq.${householdId}`, loadExpenses);
 
   useEffect(() => {
     // Carga inicial al montar (no estado derivado de props/estado existente).

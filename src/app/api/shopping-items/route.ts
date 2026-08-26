@@ -20,7 +20,7 @@ export async function GET() {
     orderBy: [{ isPurchased: "asc" }, { createdAt: "desc" }],
   });
 
-  return NextResponse.json({ items });
+  return NextResponse.json({ items, listId: list.id });
 }
 
 export async function POST(request: Request) {
