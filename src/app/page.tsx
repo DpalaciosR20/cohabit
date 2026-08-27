@@ -55,6 +55,9 @@ export default async function Home() {
             <Link href="/balance" className="rounded border px-4 py-2">
               Balance
             </Link>
+            <Link href="/bills" className="rounded border px-4 py-2">
+              Pagos recurrentes
+            </Link>
           </div>
         </div>
       ) : (
