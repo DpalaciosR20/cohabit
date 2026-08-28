@@ -125,8 +125,12 @@ export function BalanceView({
 
                 {/* Solo se muestra el botón cuando TÚ eres quien debe en general
                     — quien paga registra su propio pago; la persona a la que
-                    le deben no puede "pagarse a sí misma" desde aquí. */}
+                    le deben no puede "pagarse a sí misma" desde aquí. Con
+                    3+ miembros, además, solo tiene sentido pagarle a quien
+                    realmente le deben (balance positivo) — no a otro
+                    miembro que también está en deuda. */}
                 {b.userId !== currentUserId &&
+                  b.balance > 0.005 &&
                   currentUserBalance < -0.005 &&
                   (payingUserId === b.userId ? (
                     <SettlementForm

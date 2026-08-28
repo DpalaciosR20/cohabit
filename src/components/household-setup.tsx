@@ -11,6 +11,7 @@ export function HouseholdSetup() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("create");
   const [name, setName] = useState("");
+  const [targetMemberCount, setTargetMemberCount] = useState("");
   const [inviteCode, setInviteCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,7 +23,13 @@ export function HouseholdSetup() {
 
     try {
       const endpoint = mode === "create" ? "/api/households" : "/api/households/join";
-      const body = mode === "create" ? { name } : { inviteCode };
+      const body =
+        mode === "create"
+          ? {
+              name,
+              ...(targetMemberCount ? { targetMemberCount: Number(targetMemberCount) } : {}),
+            }
+          : { inviteCode };
 
       const res = await fetch(endpoint, {
         method: "POST",
@@ -76,14 +83,25 @@ export function HouseholdSetup() {
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {mode === "create" ? (
-          <TextField
-            label="Nombre del hogar"
-            type="text"
-            placeholder="Nuestro depa"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
+          <>
+            <TextField
+              label="Nombre del hogar"
+              type="text"
+              placeholder="Nuestro depa"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+            <TextField
+              label="¿Cuántas personas van a vivir aquí? (opcional)"
+              type="number"
+              min="1"
+              max="20"
+              placeholder="ej. 2"
+              value={targetMemberCount}
+              onChange={(e) => setTargetMemberCount(e.target.value)}
+            />
+          </>
         ) : (
           <TextField
             label="Código de invitación"
