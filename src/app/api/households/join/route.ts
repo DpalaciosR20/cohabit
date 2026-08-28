@@ -41,13 +41,23 @@ export async function POST(request: Request) {
     prisma.householdMember.create({
       data: { userId: session.user.id, householdId: household.id, role: "MEMBER" },
     }),
-    // Un split personalizado configurado antes ya no cubre a todos los
-    // miembros con esta persona nueva — se resetea a parejo para no dejar
-    // una configuración a medias hasta que alguien la vuelva a definir.
-    prisma.householdMember.updateMany({
-      where: { householdId: household.id },
-      data: { splitPercent: null },
-    }),
+    // Un split MANUAL configurado antes ya no cubre a todos los miembros con
+    // esta persona nueva — se resetea a parejo para no dejar una
+    // configuración a medias hasta que alguien la vuelva a definir. INCOME
+    // no necesita este reset: se recalcula solo con quien tenga ingreso
+    // registrado en cada momento (ver getHouseholdSplitShares).
+    ...(household.splitMode === "MANUAL"
+      ? [
+          prisma.household.update({
+            where: { id: household.id },
+            data: { splitMode: "EVEN" as const },
+          }),
+          prisma.householdMember.updateMany({
+            where: { householdId: household.id },
+            data: { splitPercent: null },
+          }),
+        ]
+      : []),
   ]);
 
   return NextResponse.json({ household }, { status: 201 });

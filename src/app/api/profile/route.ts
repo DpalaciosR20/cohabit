@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { updateProfileSchema } from "@/lib/validation/profile";
@@ -18,10 +19,14 @@ export async function PATCH(request: Request) {
     );
   }
 
+  const data: Prisma.UserUpdateInput = {};
+  if (parsed.data.color !== undefined) data.color = parsed.data.color;
+  if (parsed.data.monthlyIncome !== undefined) data.monthlyIncome = parsed.data.monthlyIncome;
+
   const user = await prisma.user.update({
     where: { id: session.user.id },
-    data: { color: parsed.data.color },
-    select: { id: true, color: true },
+    data,
+    select: { id: true, color: true, monthlyIncome: true },
   });
 
   return NextResponse.json({ user });
