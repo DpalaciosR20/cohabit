@@ -43,6 +43,7 @@ export default async function HouseholdMembersPage() {
         color: m.user.color,
         role: m.role,
         balance: balanceByUserId.get(m.userId) ?? 0,
+        splitPercent: m.splitPercent !== null ? Number(m.splitPercent) : null,
       }))}
     />
   );

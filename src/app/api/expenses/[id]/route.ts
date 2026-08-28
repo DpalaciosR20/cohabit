@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireHouseholdMember } from "@/lib/require-household";
 import { updateExpenseSchema } from "@/lib/validation/expense";
-import { splitEvenly } from "@/lib/expense-split";
+import { resolveExpenseShares } from "@/lib/get-household-split";
 
 async function getExpenseInHousehold(expenseId: string, householdId: string) {
   const expense = await prisma.expense.findUnique({ where: { id: expenseId } });
@@ -38,7 +38,8 @@ export async function PATCH(
     where: { householdId: context.householdId },
     select: { userId: true },
   });
-  const shares = splitEvenly(
+  const shares = await resolveExpenseShares(
+    context.householdId,
     parsed.data.amount,
     members.map((m) => m.userId),
     existing.paidById

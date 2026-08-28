@@ -66,6 +66,13 @@ export async function DELETE(
         });
       }
     }
+
+    // Un split personalizado ya no cubriría a los miembros restantes
+    // correctamente — se resetea a parejo hasta que se reconfigure.
+    await tx.householdMember.updateMany({
+      where: { householdId: context.householdId },
+      data: { splitPercent: null },
+    });
   });
 
   return new NextResponse(null, { status: 204 });
