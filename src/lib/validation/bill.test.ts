@@ -60,6 +60,28 @@ describe("createBillSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("accepts installmentsRemaining together with a totalInstallments", () => {
+    const result = createBillSchema.safeParse({
+      name: "Laptop",
+      amount: 800,
+      dueDay: 10,
+      installmentsRemaining: 9,
+      totalInstallments: 12,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects installmentsRemaining greater than totalInstallments", () => {
+    const result = createBillSchema.safeParse({
+      name: "Laptop",
+      amount: 800,
+      dueDay: 10,
+      installmentsRemaining: 12,
+      totalInstallments: 9,
+    });
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("payBillSchema", () => {
