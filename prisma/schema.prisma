@@ -25,11 +25,13 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  memberships    HouseholdMember[]
-  addedItems     ShoppingItem[]    @relation("ItemAddedBy")
-  purchasedItems ShoppingItem[]    @relation("ItemPurchasedBy")
-  paidExpenses   Expense[]         @relation("ExpensePaidBy")
-  expenseSplits  ExpenseSplit[]
+  memberships         HouseholdMember[]
+  addedItems          ShoppingItem[]    @relation("ItemAddedBy")
+  purchasedItems      ShoppingItem[]    @relation("ItemPurchasedBy")
+  paidExpenses        Expense[]         @relation("ExpensePaidBy")
+  expenseSplits       ExpenseSplit[]
+  settlementsPaid     Settlement[]      @relation("SettlementFrom")
+  settlementsReceived Settlement[]      @relation("SettlementTo")
 }
 
 model Household {
@@ -46,6 +48,7 @@ model Household {
   categories    Category[]
   budgets       Budget[]
   bills         Bill[]
+  settlements   Settlement[]
 }
 
 model HouseholdMember {
@@ -147,6 +150,23 @@ model Bill {
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
   category  Category? @relation(fields: [categoryId], references: [id])
   payments  Expense[]
+}
+
+/// Un pago que salda deuda registrado fuera de la app (ej. transferencia
+/// bancaria) — a diferencia de Expense, no es una compra compartida, así que
+/// nunca se reparte con ExpenseSplit; solo resta del balance calculado.
+model Settlement {
+  id          String   @id @default(cuid())
+  householdId String
+  fromUserId  String
+  toUserId    String
+  amount      Decimal  @db.Decimal(10, 2)
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  fromUser  User      @relation("SettlementFrom", fields: [fromUserId], references: [id])
+  toUser    User      @relation("SettlementTo", fields: [toUserId], references: [id])
 }
 
 model Budget {
