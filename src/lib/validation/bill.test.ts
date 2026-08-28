@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createBillSchema, payBillSchema } from "./bill";
+import { createBillSchema, payBillSchema, updateBillSchema } from "./bill";
 
 describe("createBillSchema", () => {
   it("accepts a recurring bill with no installments", () => {
@@ -81,6 +81,38 @@ describe("createBillSchema", () => {
       totalInstallments: 9,
     });
     expect(result.success).toBe(false);
+  });
+});
+
+describe("updateBillSchema", () => {
+  it("accepts a partial update", () => {
+    expect(updateBillSchema.safeParse({ name: "Internet 2" }).success).toBe(true);
+    expect(updateBillSchema.safeParse({ amount: 650 }).success).toBe(true);
+    expect(updateBillSchema.safeParse({}).success).toBe(true);
+  });
+
+  it("rejects a non-positive amount", () => {
+    expect(updateBillSchema.safeParse({ amount: 0 }).success).toBe(false);
+  });
+
+  it("rejects a dueDay outside 1-31", () => {
+    expect(updateBillSchema.safeParse({ dueDay: 32 }).success).toBe(false);
+  });
+
+  it("does not accept installmentsRemaining — se deriva en el servidor", () => {
+    const result = updateBillSchema.safeParse({ installmentsRemaining: 5 });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).not.toHaveProperty("installmentsRemaining");
+    }
+  });
+
+  it("accepts a positive totalInstallments", () => {
+    expect(updateBillSchema.safeParse({ totalInstallments: 12 }).success).toBe(true);
+  });
+
+  it("rejects a non-positive totalInstallments", () => {
+    expect(updateBillSchema.safeParse({ totalInstallments: 0 }).success).toBe(false);
   });
 });
 
