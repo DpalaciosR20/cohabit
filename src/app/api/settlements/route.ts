@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireHouseholdMember } from "@/lib/require-household";
 import { createSettlementSchema } from "@/lib/validation/settlement";
 import { getHouseholdBalances } from "@/lib/get-household-balances";
+import { formatCurrency } from "@/lib/format-currency";
 
 const OVERPAYMENT_TOLERANCE = 0.01;
 
@@ -65,7 +66,7 @@ export async function POST(request: Request) {
   if (parsed.data.amount > amountOwed + OVERPAYMENT_TOLERANCE) {
     return NextResponse.json(
       {
-        error: `No puedes registrar un pago mayor a lo que debes ($${amountOwed.toFixed(2)})`,
+        error: `No puedes registrar un pago mayor a lo que debes (${formatCurrency(amountOwed)})`,
       },
       { status: 400 }
     );

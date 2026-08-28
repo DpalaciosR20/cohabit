@@ -3,8 +3,9 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useRealtimeRefetch } from "@/lib/use-realtime-refetch";
 import { Button } from "@/components/ui/button";
-import { TextField } from "@/components/ui/text-field";
+import { MoneyInput } from "@/components/ui/money-input";
 import { PROFILE_COLOR_HEX, type ProfileColor } from "@/lib/profile-colors";
+import { formatCurrency } from "@/lib/format-currency";
 
 type MemberBalance = { userId: string; name: string; balance: number; color: ProfileColor };
 
@@ -22,16 +23,12 @@ function describe(balance: number, name: string, currentUserId: string, userId: 
   }
   if (userId === currentUserId) {
     return balance > 0
-      ? `Te deben $${balance.toFixed(2)}`
-      : `Debes $${Math.abs(balance).toFixed(2)}`;
+      ? `Te deben ${formatCurrency(balance)}`
+      : `Debes ${formatCurrency(Math.abs(balance))}`;
   }
   return balance > 0
-    ? `Le deben $${balance.toFixed(2)}`
-    : `Debe $${Math.abs(balance).toFixed(2)}`;
-}
-
-function formatMoney(value: string) {
-  return `$${Number(value).toFixed(2)}`;
+    ? `Le deben ${formatCurrency(balance)}`
+    : `Debe ${formatCurrency(Math.abs(balance))}`;
 }
 
 export function BalanceView({
@@ -169,7 +166,7 @@ export function BalanceView({
               >
                 <span className="text-ink">
                   {s.fromUser.name} → {s.toUser.name}:{" "}
-                  <span className="font-tabular font-semibold">{formatMoney(s.amount)}</span>
+                  <span className="font-tabular font-semibold">{formatCurrency(s.amount)}</span>
                   <span className="ml-2 text-xs text-ink-soft">
                     {new Date(s.date).toLocaleDateString()}
                   </span>
@@ -212,7 +209,7 @@ function SettlementForm({
     setError(null);
 
     if (exceedsDebt) {
-      setError(`No puedes registrar un pago mayor a lo que debes ($${maxAmount.toFixed(2)})`);
+      setError(`No puedes registrar un pago mayor a lo que debes (${formatCurrency(maxAmount)})`);
       return;
     }
 
@@ -238,18 +235,10 @@ function SettlementForm({
 
   return (
     <form onSubmit={handleSubmit} className="mt-2 flex flex-col gap-2">
-      <TextField
-        type="number"
-        step="0.01"
-        min="0.01"
-        max={maxAmount}
-        value={amount}
-        onChange={(e) => setAmount(e.target.value)}
-        required
-      />
+      <MoneyInput value={amount} onChange={setAmount} />
       {exceedsDebt && !error && (
         <p className="text-xs font-semibold text-negative">
-          No puedes pagar más de lo que debes (${maxAmount.toFixed(2)})
+          No puedes pagar más de lo que debes ({formatCurrency(maxAmount)})
         </p>
       )}
       {error && <p className="text-xs font-semibold text-negative">{error}</p>}
