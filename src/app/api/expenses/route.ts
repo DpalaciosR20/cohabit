@@ -15,6 +15,7 @@ export async function GET() {
     include: {
       paidBy: { select: { id: true, name: true } },
       splits: { include: { user: { select: { id: true, name: true } } } },
+      bill: { select: { id: true, name: true } },
     },
     orderBy: { date: "desc" },
   });

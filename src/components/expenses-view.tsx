@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 import { useRealtimeRefetch } from "@/lib/use-realtime-refetch";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ type Expense = {
   date: string;
   paidBy: { id: string; name: string };
   splits: { userId: string; shareAmount: string; user: { id: string; name: string } }[];
+  bill: { id: string; name: string } | null;
 };
 
 function formatMoney(value: string) {
@@ -121,6 +123,7 @@ function ExpenseRow({
   expense: Expense;
   onChanged: () => Promise<void>;
 }) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [description, setDescription] = useState(expense.description);
   const [amount, setAmount] = useState(expense.amount);
@@ -197,37 +200,69 @@ function ExpenseRow({
 
   return (
     <li className="rounded-2xl border border-rule bg-surface px-4 py-3">
-      <div className="flex items-baseline justify-between">
-        <p className="text-sm font-bold text-ink">{expense.description}</p>
-        <p className="font-tabular text-sm font-bold text-ink">{formatMoney(expense.amount)}</p>
-      </div>
-      <p className="text-xs text-ink-soft">
-        Pagado por {expense.paidBy.name} ·{" "}
-        {new Date(expense.date).toLocaleDateString()}
-      </p>
-      <ul className="mt-2 flex flex-col gap-0.5 text-xs text-ink-soft">
-        {expense.splits.map((split) => (
-          <li key={split.userId} className="font-tabular">
-            {split.user.name}: {formatMoney(split.shareAmount)}
-          </li>
-        ))}
-      </ul>
-      <div className="mt-2 flex gap-3 text-xs font-semibold">
-        <button
-          type="button"
-          onClick={() => setIsEditing(true)}
-          className="text-ink-soft hover:text-ink"
-        >
-          Editar
-        </button>
-        <button
-          type="button"
-          onClick={handleDelete}
-          className="text-ink-soft hover:text-negative"
-        >
-          Eliminar
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => setIsExpanded((v) => !v)}
+        className="flex w-full flex-col gap-1 text-left"
+        aria-expanded={isExpanded}
+      >
+        <div className="flex items-baseline justify-between gap-2">
+          <p className="text-sm font-bold text-ink">{expense.description}</p>
+          <p className="font-tabular text-sm font-bold text-ink">{formatMoney(expense.amount)}</p>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs text-ink-soft">
+          <span>
+            Pagado por {expense.paidBy.name} · {new Date(expense.date).toLocaleDateString()}
+          </span>
+          {expense.bill && (
+            <span className="flex items-center gap-0.5 rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] font-bold text-accent">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 2.1l4 4-4 4" />
+                <path d="M3 12.7V12a9 9 0 0 1 15-6.7l3 2.8" />
+                <path d="M7 21.9l-4-4 4-4" />
+                <path d="M21 11.3V12a9 9 0 0 1-15 6.7l-3-2.8" />
+              </svg>
+              {expense.bill.name}
+            </span>
+          )}
+        </div>
+      </button>
+
+      {isExpanded && (
+        <div className="mt-2.5 flex flex-col gap-2.5 border-t border-rule pt-2.5">
+          {expense.bill && (
+            <Link
+              href="/bills"
+              className="text-xs font-semibold text-accent hover:underline"
+            >
+              Ver pago recurrente: {expense.bill.name} →
+            </Link>
+          )}
+          <ul className="flex flex-col gap-0.5 text-xs text-ink-soft">
+            {expense.splits.map((split) => (
+              <li key={split.userId} className="font-tabular">
+                {split.user.name}: {formatMoney(split.shareAmount)}
+              </li>
+            ))}
+          </ul>
+          <div className="flex gap-3 text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => setIsEditing(true)}
+              className="text-ink-soft hover:text-ink"
+            >
+              Editar
+            </button>
+            <button
+              type="button"
+              onClick={handleDelete}
+              className="text-ink-soft hover:text-negative"
+            >
+              Eliminar
+            </button>
+          </div>
+        </div>
+      )}
     </li>
   );
 }
