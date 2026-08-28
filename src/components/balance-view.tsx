@@ -2,6 +2,8 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useRealtimeRefetch } from "@/lib/use-realtime-refetch";
+import { Button } from "@/components/ui/button";
+import { TextField } from "@/components/ui/text-field";
 
 type MemberBalance = { userId: string; name: string; balance: number };
 
@@ -85,57 +87,69 @@ export function BalanceView({
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col gap-6 p-6">
+    <main className="mx-auto flex max-w-md flex-col gap-5 p-5">
       <div>
-        <h1 className="text-2xl font-semibold">Balance</h1>
-        <p className="text-sm text-zinc-600">{householdName}</p>
+        <h1 className="text-xl font-extrabold tracking-tight text-ink">Balance</h1>
+        <p className="text-xs font-semibold text-ink-soft">{householdName}</p>
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-zinc-500">Cargando…</p>
+        <p className="text-sm text-ink-soft">Cargando…</p>
       ) : (
-        <ul className="flex flex-col gap-2">
-          {balances.map((b) => (
-            <li key={b.userId} className="rounded border px-4 py-3">
-              <div className="flex items-center justify-between">
-                <span className="font-medium">{b.name}</span>
-                <span
-                  className={
+        <ul className="flex flex-col gap-3">
+          {balances.map((b, i) => (
+            <li
+              key={b.userId}
+              className="flex items-center gap-3 rounded-2xl border border-rule bg-surface px-4 py-3.5"
+            >
+              <div
+                className="flex h-9 w-9 flex-none items-center justify-center rounded-full text-sm font-bold text-white"
+                style={{ background: i % 2 === 0 ? "var(--color-accent)" : "var(--color-partner)" }}
+              >
+                {b.name.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex-1">
+                <div className="text-sm font-bold text-ink">
+                  {b.name}
+                  {b.userId === currentUserId ? " (tú)" : ""}
+                </div>
+                <div
+                  className={`font-tabular text-xs font-semibold ${
                     b.balance > 0.005
-                      ? "text-green-700"
+                      ? "text-positive"
                       : b.balance < -0.005
-                        ? "text-red-600"
-                        : "text-zinc-500"
-                  }
+                        ? "text-negative"
+                        : "text-ink-soft"
+                  }`}
                 >
                   {describe(b.balance, b.name, currentUserId, b.userId)}
-                </span>
-              </div>
+                </div>
 
-              {/* Solo se muestra el botón cuando TÚ eres quien debe en general
-                  — quien paga registra su propio pago; la persona a la que
-                  le deben no puede "pagarse a sí misma" desde aquí. */}
-              {b.userId !== currentUserId &&
-                currentUserBalance < -0.005 &&
-                (payingUserId === b.userId ? (
-                  <SettlementForm
-                    toUserId={b.userId}
-                    maxAmount={-currentUserBalance}
-                    onCancel={() => setPayingUserId(null)}
-                    onSaved={async () => {
-                      setPayingUserId(null);
-                      await loadAll();
-                    }}
-                  />
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setPayingUserId(b.userId)}
-                    className="mt-2 text-xs text-zinc-600 hover:text-black"
-                  >
-                    Registrar pago a {b.name}
-                  </button>
-                ))}
+                {/* Solo se muestra el botón cuando TÚ eres quien debe en general
+                    — quien paga registra su propio pago; la persona a la que
+                    le deben no puede "pagarse a sí misma" desde aquí. */}
+                {b.userId !== currentUserId &&
+                  currentUserBalance < -0.005 &&
+                  (payingUserId === b.userId ? (
+                    <SettlementForm
+                      toUserId={b.userId}
+                      maxAmount={-currentUserBalance}
+                      onCancel={() => setPayingUserId(null)}
+                      onSaved={async () => {
+                        setPayingUserId(null);
+                        await loadAll();
+                      }}
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setPayingUserId(b.userId)}
+                      className="mt-1.5 text-xs font-bold text-accent"
+                    >
+                      Registrar pago a {b.name}
+                    </button>
+                  ))}
+              </div>
             </li>
           ))}
         </ul>
@@ -143,23 +157,26 @@ export function BalanceView({
 
       {settlements.length > 0 && (
         <div>
-          <h2 className="mb-2 text-sm font-medium text-zinc-600">Pagos registrados</h2>
+          <h2 className="mb-2 text-[11px] font-bold uppercase tracking-wide text-ink-soft">
+            Pagos registrados
+          </h2>
           <ul className="flex flex-col gap-2">
             {settlements.map((s) => (
               <li
                 key={s.id}
-                className="flex items-center justify-between rounded border px-3 py-2 text-sm"
+                className="flex items-center justify-between rounded-xl border border-rule bg-surface px-3 py-2 text-sm"
               >
-                <span>
-                  {s.fromUser.name} → {s.toUser.name}: {formatMoney(s.amount)}
-                  <span className="ml-2 text-xs text-zinc-500">
+                <span className="text-ink">
+                  {s.fromUser.name} → {s.toUser.name}:{" "}
+                  <span className="font-tabular font-semibold">{formatMoney(s.amount)}</span>
+                  <span className="ml-2 text-xs text-ink-soft">
                     {new Date(s.date).toLocaleDateString()}
                   </span>
                 </span>
                 <button
                   type="button"
                   onClick={() => handleDeleteSettlement(s.id)}
-                  className="text-zinc-400 hover:text-red-600"
+                  className="text-ink-soft hover:text-negative"
                 >
                   ✕
                 </button>
@@ -220,8 +237,7 @@ function SettlementForm({
 
   return (
     <form onSubmit={handleSubmit} className="mt-2 flex flex-col gap-2">
-      <input
-        className="rounded border px-3 py-2"
+      <TextField
         type="number"
         step="0.01"
         min="0.01"
@@ -231,22 +247,23 @@ function SettlementForm({
         required
       />
       {exceedsDebt && !error && (
-        <p className="text-sm text-red-600">
+        <p className="text-xs font-semibold text-negative">
           No puedes pagar más de lo que debes (${maxAmount.toFixed(2)})
         </p>
       )}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-xs font-semibold text-negative">{error}</p>}
       <div className="flex gap-2">
-        <button
-          type="submit"
-          disabled={isSaving || exceedsDebt}
-          className="rounded bg-black px-3 py-1.5 text-sm text-white disabled:opacity-50"
-        >
+        <Button type="submit" disabled={isSaving || exceedsDebt} className="px-3 py-1.5 text-xs">
           {isSaving ? "Guardando…" : "Confirmar pago"}
-        </button>
-        <button type="button" onClick={onCancel} className="rounded border px-3 py-1.5 text-sm">
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={onCancel}
+          className="px-3 py-1.5 text-xs"
+        >
           Cancelar
-        </button>
+        </Button>
       </div>
     </form>
   );
