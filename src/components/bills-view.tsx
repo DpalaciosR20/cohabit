@@ -56,7 +56,16 @@ export function BillsView({
   const [isInstallment, setIsInstallment] = useState(false);
   const [installments, setInstallments] = useState("");
   const [startsAt, setStartsAt] = useState(currentMonthValue());
+  const [useTotalAmount, setUseTotalAmount] = useState(false);
+  const [totalAmount, setTotalAmount] = useState("");
+  const [totalInstallments, setTotalInstallments] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  const computedMonthlyAmount =
+    useTotalAmount && Number(totalAmount) > 0 && Number(totalInstallments) > 0
+      ? Number(totalAmount) / Number(totalInstallments)
+      : null;
+  const effectiveAmount = useTotalAmount ? computedMonthlyAmount : Number(amount);
 
   async function loadBills() {
     const res = await fetch("/api/bills");
@@ -80,12 +89,17 @@ export function BillsView({
     event.preventDefault();
     setError(null);
 
+    if (!effectiveAmount || effectiveAmount <= 0) {
+      setError("El monto mensual debe ser mayor a cero");
+      return;
+    }
+
     const res = await fetch("/api/bills", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name,
-        amount: Number(amount),
+        amount: effectiveAmount,
         dueDay: Number(dueDay),
         installmentsRemaining: isInstallment ? Number(installments) : null,
         startsAt,
@@ -104,6 +118,9 @@ export function BillsView({
     setIsInstallment(false);
     setInstallments("");
     setStartsAt(currentMonthValue());
+    setUseTotalAmount(false);
+    setTotalAmount("");
+    setTotalInstallments("");
     await loadBills();
   }
 
@@ -131,17 +148,51 @@ export function BillsView({
           />
           Es una compra a meses
         </label>
+        {isInstallment && (
+          <label className="flex items-center gap-2 text-sm text-zinc-600">
+            <input
+              type="checkbox"
+              checked={useTotalAmount}
+              onChange={(e) => setUseTotalAmount(e.target.checked)}
+            />
+            Conozco el monto total (calcular la mensualidad)
+          </label>
+        )}
         <div className="flex gap-2">
-          <input
-            className="flex-1 rounded border px-3 py-2"
-            type="number"
-            step="0.01"
-            min="0.01"
-            placeholder={isInstallment ? "Monto mensual" : "Monto estimado"}
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            required
-          />
+          {useTotalAmount ? (
+            <>
+              <input
+                className="flex-1 rounded border px-3 py-2"
+                type="number"
+                step="0.01"
+                min="0.01"
+                placeholder="Monto total"
+                value={totalAmount}
+                onChange={(e) => setTotalAmount(e.target.value)}
+                required
+              />
+              <input
+                className="w-32 rounded border px-3 py-2"
+                type="number"
+                min="1"
+                placeholder="Núm. de mensualidades"
+                value={totalInstallments}
+                onChange={(e) => setTotalInstallments(e.target.value)}
+                required
+              />
+            </>
+          ) : (
+            <input
+              className="flex-1 rounded border px-3 py-2"
+              type="number"
+              step="0.01"
+              min="0.01"
+              placeholder={isInstallment ? "Monto mensual" : "Monto estimado"}
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              required
+            />
+          )}
           <input
             className="w-28 rounded border px-3 py-2"
             type="number"
@@ -153,16 +204,26 @@ export function BillsView({
             required
           />
         </div>
+        {useTotalAmount && computedMonthlyAmount !== null && (
+          <p className="text-xs text-zinc-500">
+            Mensualidad calculada: <strong>${computedMonthlyAmount.toFixed(2)}</strong>
+          </p>
+        )}
         {isInstallment && (
-          <input
-            className="rounded border px-3 py-2"
-            type="number"
-            min="1"
-            placeholder="Mensualidades restantes"
-            value={installments}
-            onChange={(e) => setInstallments(e.target.value)}
-            required
-          />
+          <label className="flex flex-col gap-1 text-sm text-zinc-600">
+            Mensualidades restantes
+            <input
+              className="rounded border px-3 py-2 text-zinc-900"
+              type="number"
+              min="1"
+              placeholder={
+                useTotalAmount ? "ej. si ya pagaste algunas, cuántas te faltan" : undefined
+              }
+              value={installments}
+              onChange={(e) => setInstallments(e.target.value)}
+              required
+            />
+          </label>
         )}
         <label className="flex flex-col gap-1 text-sm text-zinc-600">
           Primer mes de cobro
