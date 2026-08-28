@@ -16,14 +16,30 @@ enum HouseholdRole {
   MEMBER
 }
 
+/// Paleta curada de 8 colores para identificar a cada usuario en la app
+/// (avatares, barra de balance, menciones con nombre) — no es un selector
+/// libre, para que cualquier combinación siga encajando con el sistema
+/// de diseño base.
+enum ProfileColor {
+  INDIGO
+  GREEN
+  ORANGE
+  PINK
+  TEAL
+  LAVENDER
+  GOLD
+  GRAPHITE
+}
+
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
+  id           String       @id @default(cuid())
+  email        String       @unique
   name         String
   avatarUrl    String?
+  color        ProfileColor @default(INDIGO)
   passwordHash String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
   memberships         HouseholdMember[]
   addedItems          ShoppingItem[]    @relation("ItemAddedBy")

@@ -1,11 +1,16 @@
 import { prisma } from "@/lib/prisma";
 import { computeBalances, type MemberBalance } from "@/lib/balance";
+import type { ProfileColor } from "@/lib/profile-colors";
 
-export async function getHouseholdBalances(householdId: string): Promise<MemberBalance[]> {
+export type MemberBalanceWithColor = MemberBalance & { color: ProfileColor };
+
+export async function getHouseholdBalances(
+  householdId: string
+): Promise<MemberBalanceWithColor[]> {
   const [members, expenses, splits, settlements] = await Promise.all([
     prisma.householdMember.findMany({
       where: { householdId },
-      include: { user: { select: { id: true, name: true } } },
+      include: { user: { select: { id: true, name: true, color: true } } },
     }),
     prisma.expense.findMany({
       where: { householdId },
@@ -21,7 +26,7 @@ export async function getHouseholdBalances(householdId: string): Promise<MemberB
     }),
   ]);
 
-  return computeBalances(
+  const balances = computeBalances(
     members.map((m) => ({ userId: m.userId, name: m.user.name })),
     expenses.map((e) => ({ paidById: e.paidById, amount: Number(e.amount) })),
     splits.map((s) => ({ userId: s.userId, shareAmount: Number(s.shareAmount) })),
@@ -31,4 +36,7 @@ export async function getHouseholdBalances(householdId: string): Promise<MemberB
       amount: Number(s.amount),
     }))
   );
+
+  const colorByUserId = new Map(members.map((m) => [m.userId, m.user.color]));
+  return balances.map((b) => ({ ...b, color: colorByUserId.get(b.userId) ?? "INDIGO" }));
 }
