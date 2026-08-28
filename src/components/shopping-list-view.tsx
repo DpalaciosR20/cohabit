@@ -2,6 +2,8 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useRealtimeRefetch } from "@/lib/use-realtime-refetch";
+import { Button } from "@/components/ui/button";
+import { TextField } from "@/components/ui/text-field";
 
 type ShoppingItem = {
   id: string;
@@ -77,32 +79,30 @@ export function ShoppingListView({ householdName }: { householdName: string }) {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col gap-6 p-6">
+    <main className="mx-auto flex max-w-md flex-col gap-5 p-5">
       <div>
-        <h1 className="text-2xl font-semibold">Lista de compras</h1>
-        <p className="text-sm text-zinc-600">{householdName}</p>
+        <h1 className="text-xl font-extrabold tracking-tight text-ink">Lista de compras</h1>
+        <p className="text-xs font-semibold text-ink-soft">{householdName}</p>
       </div>
 
       <form onSubmit={handleAdd} className="flex gap-2">
-        <input
-          className="flex-1 rounded border px-3 py-2"
+        <TextField
+          className="flex-1"
           type="text"
           placeholder="Agregar item…"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
         />
-        <button type="submit" className="rounded bg-black px-4 py-2 text-white">
-          Agregar
-        </button>
+        <Button type="submit">Agregar</Button>
       </form>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm font-semibold text-negative">{error}</p>}
 
       {isLoading ? (
-        <p className="text-sm text-zinc-500">Cargando…</p>
+        <p className="text-sm text-ink-soft">Cargando…</p>
       ) : items.length === 0 ? (
-        <p className="text-sm text-zinc-500">La lista está vacía.</p>
+        <p className="text-sm text-ink-soft">La lista está vacía.</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {items.map((item) => (
@@ -164,18 +164,18 @@ function ShoppingListItemRow({
 
   if (isEditing) {
     return (
-      <li className="rounded border px-3 py-2">
+      <li className="rounded-2xl border border-rule bg-surface px-4 py-3">
         <form onSubmit={handleSave} className="flex flex-col gap-2">
           <div className="flex gap-2">
-            <input
-              className="flex-1 rounded border px-3 py-2"
+            <TextField
+              className="flex-1"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
             />
-            <input
-              className="w-20 rounded border px-3 py-2"
+            <TextField
+              className="w-20"
               type="number"
               min="1"
               value={quantity}
@@ -183,22 +183,19 @@ function ShoppingListItemRow({
               required
             />
           </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm font-semibold text-negative">{error}</p>}
           <div className="flex gap-2">
-            <button
-              type="submit"
-              disabled={isSaving}
-              className="rounded bg-black px-3 py-1.5 text-sm text-white disabled:opacity-50"
-            >
+            <Button type="submit" disabled={isSaving} className="px-3 py-1.5 text-xs">
               {isSaving ? "Guardando…" : "Guardar"}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="secondary"
               onClick={() => setIsEditing(false)}
-              className="rounded border px-3 py-1.5 text-sm"
+              className="px-3 py-1.5 text-xs"
             >
               Cancelar
-            </button>
+            </Button>
           </div>
         </form>
       </li>
@@ -206,14 +203,19 @@ function ShoppingListItemRow({
   }
 
   return (
-    <li className="flex items-center gap-3 rounded border px-3 py-2">
-      <input type="checkbox" checked={item.isPurchased} onChange={onTogglePurchased} />
+    <li className="flex items-center gap-3 rounded-2xl border border-rule bg-surface px-4 py-3">
+      <input
+        type="checkbox"
+        checked={item.isPurchased}
+        onChange={onTogglePurchased}
+        className="h-4 w-4 accent-accent"
+      />
       <div className="flex-1">
-        <p className={item.isPurchased ? "text-zinc-400 line-through" : ""}>
+        <p className={`text-sm font-semibold ${item.isPurchased ? "text-ink-soft line-through" : "text-ink"}`}>
           {item.name}
           {item.quantity > 1 ? ` ×${item.quantity}` : ""}
         </p>
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-ink-soft">
           {item.isPurchased && item.purchasedBy
             ? `Comprado por ${item.purchasedBy.name}`
             : `Agregado por ${item.addedBy.name}`}
@@ -223,7 +225,7 @@ function ShoppingListItemRow({
         type="button"
         onClick={() => setIsEditing(true)}
         aria-label={`Editar ${item.name}`}
-        className="text-sm text-zinc-400 hover:text-black"
+        className="text-xs font-semibold text-ink-soft hover:text-ink"
       >
         Editar
       </button>
@@ -231,7 +233,7 @@ function ShoppingListItemRow({
         type="button"
         onClick={onRemove}
         aria-label={`Eliminar ${item.name}`}
-        className="text-sm text-zinc-400 hover:text-red-600"
+        className="text-ink-soft hover:text-negative"
       >
         ✕
       </button>

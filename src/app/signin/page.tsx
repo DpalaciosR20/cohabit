@@ -4,6 +4,8 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { TextField } from "@/components/ui/text-field";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -38,45 +40,35 @@ export default function SignInPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 p-6">
-      <h1 className="text-2xl font-semibold">Inicia sesión</h1>
+      <h1 className="text-2xl font-extrabold tracking-tight text-ink">Inicia sesión</h1>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-1 text-sm">
-          Correo
-          <input
-            className="rounded border px-3 py-2"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </label>
+        <TextField
+          label="Correo"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
 
-        <label className="flex flex-col gap-1 text-sm">
-          Contraseña
-          <input
-            className="rounded border px-3 py-2"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </label>
+        <TextField
+          label="Contraseña"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm font-semibold text-negative">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="rounded bg-black px-4 py-2 text-white disabled:opacity-50"
-        >
+        <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Entrando…" : "Entrar"}
-        </button>
+        </Button>
       </form>
 
-      <p className="text-sm">
+      <p className="text-sm text-ink-soft">
         ¿No tienes cuenta?{" "}
-        <Link href="/signup" className="underline">
+        <Link href="/signup" className="font-semibold text-accent">
           Regístrate
         </Link>
       </p>

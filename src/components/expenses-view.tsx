@@ -2,6 +2,8 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useRealtimeRefetch } from "@/lib/use-realtime-refetch";
+import { Button } from "@/components/ui/button";
+import { TextField } from "@/components/ui/text-field";
 
 type Expense = {
   id: string;
@@ -66,15 +68,14 @@ export function ExpensesView({
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col gap-6 p-6">
+    <main className="mx-auto flex max-w-md flex-col gap-5 p-5">
       <div>
-        <h1 className="text-2xl font-semibold">Gastos</h1>
-        <p className="text-sm text-zinc-600">{householdName}</p>
+        <h1 className="text-xl font-extrabold tracking-tight text-ink">Gastos</h1>
+        <p className="text-xs font-semibold text-ink-soft">{householdName}</p>
       </div>
 
       <form onSubmit={handleAdd} className="flex flex-col gap-3">
-        <input
-          className="rounded border px-3 py-2"
+        <TextField
           type="text"
           placeholder="Descripción (ej. Supermercado)"
           value={description}
@@ -82,8 +83,8 @@ export function ExpensesView({
           required
         />
         <div className="flex gap-2">
-          <input
-            className="flex-1 rounded border px-3 py-2"
+          <TextField
+            className="flex-1"
             type="number"
             step="0.01"
             min="0.01"
@@ -92,18 +93,16 @@ export function ExpensesView({
             onChange={(e) => setAmount(e.target.value)}
             required
           />
-          <button type="submit" className="rounded bg-black px-4 py-2 text-white">
-            Registrar
-          </button>
+          <Button type="submit">Registrar</Button>
         </div>
       </form>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm font-semibold text-negative">{error}</p>}
 
       {isLoading ? (
-        <p className="text-sm text-zinc-500">Cargando…</p>
+        <p className="text-sm text-ink-soft">Cargando…</p>
       ) : expenses.length === 0 ? (
-        <p className="text-sm text-zinc-500">Aún no hay gastos registrados.</p>
+        <p className="text-sm text-ink-soft">Aún no hay gastos registrados.</p>
       ) : (
         <ul className="flex flex-col gap-3">
           {expenses.map((expense) => (
@@ -161,17 +160,15 @@ function ExpenseRow({
 
   if (isEditing) {
     return (
-      <li className="rounded border px-4 py-3">
+      <li className="rounded-2xl border border-rule bg-surface px-4 py-3">
         <form onSubmit={handleSave} className="flex flex-col gap-2">
-          <input
-            className="rounded border px-3 py-2"
+          <TextField
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             required
           />
-          <input
-            className="rounded border px-3 py-2"
+          <TextField
             type="number"
             step="0.01"
             min="0.01"
@@ -179,22 +176,19 @@ function ExpenseRow({
             onChange={(e) => setAmount(e.target.value)}
             required
           />
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm font-semibold text-negative">{error}</p>}
           <div className="flex gap-2">
-            <button
-              type="submit"
-              disabled={isSaving}
-              className="rounded bg-black px-3 py-1.5 text-sm text-white disabled:opacity-50"
-            >
+            <Button type="submit" disabled={isSaving} className="px-3 py-1.5 text-xs">
               {isSaving ? "Guardando…" : "Guardar"}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="secondary"
               onClick={() => setIsEditing(false)}
-              className="rounded border px-3 py-1.5 text-sm"
+              className="px-3 py-1.5 text-xs"
             >
               Cancelar
-            </button>
+            </Button>
           </div>
         </form>
       </li>
@@ -202,34 +196,34 @@ function ExpenseRow({
   }
 
   return (
-    <li className="rounded border px-4 py-3">
+    <li className="rounded-2xl border border-rule bg-surface px-4 py-3">
       <div className="flex items-baseline justify-between">
-        <p className="font-medium">{expense.description}</p>
-        <p className="font-medium">{formatMoney(expense.amount)}</p>
+        <p className="text-sm font-bold text-ink">{expense.description}</p>
+        <p className="font-tabular text-sm font-bold text-ink">{formatMoney(expense.amount)}</p>
       </div>
-      <p className="text-xs text-zinc-500">
+      <p className="text-xs text-ink-soft">
         Pagado por {expense.paidBy.name} ·{" "}
         {new Date(expense.date).toLocaleDateString()}
       </p>
-      <ul className="mt-2 flex flex-col gap-0.5 text-xs text-zinc-600">
+      <ul className="mt-2 flex flex-col gap-0.5 text-xs text-ink-soft">
         {expense.splits.map((split) => (
-          <li key={split.userId}>
+          <li key={split.userId} className="font-tabular">
             {split.user.name}: {formatMoney(split.shareAmount)}
           </li>
         ))}
       </ul>
-      <div className="mt-2 flex gap-3 text-xs">
+      <div className="mt-2 flex gap-3 text-xs font-semibold">
         <button
           type="button"
           onClick={() => setIsEditing(true)}
-          className="text-zinc-500 hover:text-black"
+          className="text-ink-soft hover:text-ink"
         >
           Editar
         </button>
         <button
           type="button"
           onClick={handleDelete}
-          className="text-zinc-500 hover:text-red-600"
+          className="text-ink-soft hover:text-negative"
         >
           Eliminar
         </button>

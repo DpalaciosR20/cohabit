@@ -2,6 +2,8 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { TextField } from "@/components/ui/text-field";
 
 type Mode = "create" | "join";
 
@@ -45,18 +47,18 @@ export function HouseholdSetup() {
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 p-6">
       <div>
-        <h1 className="text-2xl font-semibold">Configura tu hogar</h1>
-        <p className="mt-1 text-sm text-zinc-600">
+        <h1 className="text-2xl font-extrabold tracking-tight text-ink">Configura tu hogar</h1>
+        <p className="mt-1 text-sm text-ink-soft">
           Crea un hogar nuevo o únete a uno existente con un código de invitación.
         </p>
       </div>
 
-      <div className="flex gap-2 text-sm">
+      <div className="flex gap-2 rounded-xl bg-accent-soft p-1 text-sm">
         <button
           type="button"
           onClick={() => setMode("create")}
-          className={`flex-1 rounded border px-3 py-2 ${
-            mode === "create" ? "border-black bg-black text-white" : ""
+          className={`flex-1 rounded-lg px-3 py-2 font-bold transition-colors ${
+            mode === "create" ? "bg-accent text-accent-ink" : "text-ink-soft"
           }`}
         >
           Crear hogar
@@ -64,8 +66,8 @@ export function HouseholdSetup() {
         <button
           type="button"
           onClick={() => setMode("join")}
-          className={`flex-1 rounded border px-3 py-2 ${
-            mode === "join" ? "border-black bg-black text-white" : ""
+          className={`flex-1 rounded-lg px-3 py-2 font-bold transition-colors ${
+            mode === "join" ? "bg-accent text-accent-ink" : "text-ink-soft"
           }`}
         >
           Unirme con código
@@ -74,37 +76,27 @@ export function HouseholdSetup() {
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {mode === "create" ? (
-          <label className="flex flex-col gap-1 text-sm">
-            Nombre del hogar
-            <input
-              className="rounded border px-3 py-2"
-              type="text"
-              placeholder="Nuestro depa"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          </label>
+          <TextField
+            label="Nombre del hogar"
+            type="text"
+            placeholder="Nuestro depa"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
         ) : (
-          <label className="flex flex-col gap-1 text-sm">
-            Código de invitación
-            <input
-              className="rounded border px-3 py-2"
-              type="text"
-              value={inviteCode}
-              onChange={(e) => setInviteCode(e.target.value)}
-              required
-            />
-          </label>
+          <TextField
+            label="Código de invitación"
+            type="text"
+            value={inviteCode}
+            onChange={(e) => setInviteCode(e.target.value)}
+            required
+          />
         )}
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm font-semibold text-negative">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="rounded bg-black px-4 py-2 text-white disabled:opacity-50"
-        >
+        <Button type="submit" disabled={isSubmitting}>
           {isSubmitting
             ? mode === "create"
               ? "Creando…"
@@ -112,7 +104,7 @@ export function HouseholdSetup() {
             : mode === "create"
               ? "Crear hogar"
               : "Unirme"}
-        </button>
+        </Button>
       </form>
     </main>
   );
