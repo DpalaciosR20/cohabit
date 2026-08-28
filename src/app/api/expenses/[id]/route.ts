@@ -80,6 +80,22 @@ export async function DELETE(
     return NextResponse.json({ error: "Gasto no encontrado" }, { status: 404 });
   }
 
-  await prisma.expense.delete({ where: { id } });
+  await prisma.$transaction(async (tx) => {
+    await tx.expense.delete({ where: { id } });
+
+    // Si este gasto venía de un Bill (pago de una compra a meses/recurrente),
+    // borrarlo significa que ese pago nunca ocurrió — hay que devolverle su
+    // mensualidad y, si se había desactivado al llegar a 0, reactivarlo.
+    if (existing.billId) {
+      const bill = await tx.bill.findUnique({ where: { id: existing.billId } });
+      if (bill?.installmentsRemaining !== null && bill?.installmentsRemaining !== undefined) {
+        await tx.bill.update({
+          where: { id: existing.billId },
+          data: { installmentsRemaining: bill.installmentsRemaining + 1, isActive: true },
+        });
+      }
+    }
+  });
+
   return new NextResponse(null, { status: 204 });
 }
