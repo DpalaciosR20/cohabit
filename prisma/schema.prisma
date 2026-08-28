@@ -138,6 +138,9 @@ model Bill {
   dueDay                Int
   categoryId            String?
   installmentsRemaining Int?
+  /// Primer mes en que este Bill empieza a generar vencimientos — antes de
+  /// este mes, nunca se marca como "vencido" ni "vence pronto".
+  startsAt              DateTime @default(now())
   isActive              Boolean  @default(true)
   createdAt             DateTime @default(now())
 

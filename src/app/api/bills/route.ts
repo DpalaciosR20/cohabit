@@ -22,7 +22,12 @@ export async function GET() {
   const billsWithStatus = bills
     .map((bill) => {
       const lastPaymentDate = bill.payments[0]?.date ?? null;
-      const { dueDate, status } = computeBillStatus(bill.dueDay, lastPaymentDate, today);
+      const { dueDate, status } = computeBillStatus(
+        bill.dueDay,
+        lastPaymentDate,
+        today,
+        bill.startsAt
+      );
       return {
         id: bill.id,
         name: bill.name,
@@ -54,6 +59,10 @@ export async function POST(request: Request) {
     );
   }
 
+  const startsAt = parsed.data.startsAt
+    ? new Date(`${parsed.data.startsAt}-01T00:00:00`)
+    : new Date();
+
   const bill = await prisma.bill.create({
     data: {
       householdId: context.householdId,
@@ -61,6 +70,7 @@ export async function POST(request: Request) {
       amount: parsed.data.amount,
       dueDay: parsed.data.dueDay,
       installmentsRemaining: parsed.data.installmentsRemaining ?? null,
+      startsAt,
     },
   });
 
