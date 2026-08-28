@@ -30,6 +30,24 @@ export const createBillSchema = z
 
 export type CreateBillInput = z.infer<typeof createBillSchema>;
 
+// `installmentsRemaining` se omite a propósito: una vez que un Bill existe,
+// esa cifra siempre se deriva en el servidor a partir de totalInstallments y
+// los pagos ya registrados — nunca se acepta directamente del cliente, para
+// que no se pueda desincronizar del historial real de pagos.
+export const updateBillSchema = z.object({
+  name: z.string().trim().min(1, "El nombre es requerido").max(100).optional(),
+  amount: z
+    .number()
+    .positive("El monto debe ser mayor a cero")
+    .max(1_000_000, "El monto es demasiado grande")
+    .optional(),
+  dueDay: z.number().int().min(1, "Debe ser entre 1 y 31").max(31, "Debe ser entre 1 y 31").optional(),
+  totalInstallments: z.number().int().positive().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export type UpdateBillInput = z.infer<typeof updateBillSchema>;
+
 export const payBillSchema = z.object({
   amount: z
     .number()

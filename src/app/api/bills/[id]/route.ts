@@ -1,16 +1,8 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireHouseholdMember } from "@/lib/require-household";
-
-const updateBillSchema = z.object({
-  name: z.string().trim().min(1).max(100).optional(),
-  amount: z.number().positive().max(1_000_000).optional(),
-  dueDay: z.number().int().min(1).max(31).optional(),
-  installmentsRemaining: z.number().int().positive().nullable().optional(),
-  totalInstallments: z.number().int().positive().nullable().optional(),
-  isActive: z.boolean().optional(),
-});
+import { updateBillSchema } from "@/lib/validation/bill";
 
 async function getBillInHousehold(billId: string, householdId: string) {
   const bill = await prisma.bill.findUnique({ where: { id: billId } });
@@ -42,7 +34,30 @@ export async function PATCH(
     return NextResponse.json({ error: "Pago recurrente no encontrado" }, { status: 404 });
   }
 
-  const bill = await prisma.bill.update({ where: { id }, data: parsed.data });
+  const data: Prisma.BillUpdateInput = { ...parsed.data };
+
+  if (parsed.data.totalInstallments !== undefined) {
+    if (existing.totalInstallments === null) {
+      return NextResponse.json(
+        { error: "Este pago no es una compra a meses" },
+        { status: 400 }
+      );
+    }
+
+    const paymentCount = await prisma.expense.count({ where: { billId: id } });
+    if (parsed.data.totalInstallments < paymentCount) {
+      return NextResponse.json(
+        { error: `El total no puede ser menor a los ${paymentCount} pagos ya registrados` },
+        { status: 400 }
+      );
+    }
+
+    // installmentsRemaining nunca viene del cliente — siempre se deriva del
+    // total y los pagos reales, para que nunca pueda desincronizarse.
+    data.installmentsRemaining = parsed.data.totalInstallments - paymentCount;
+  }
+
+  const bill = await prisma.bill.update({ where: { id }, data });
   return NextResponse.json({ bill });
 }
 

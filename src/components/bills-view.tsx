@@ -253,8 +253,47 @@ export function BillsView({
 function BillRow({ bill, onChanged }: { bill: Bill; onChanged: () => Promise<void> }) {
   const [isPaying, setIsPaying] = useState(false);
   const [payAmount, setPayAmount] = useState(bill.amount);
+  const [isEditing, setIsEditing] = useState(false);
+  const [name, setName] = useState(bill.name);
+  const [amount, setAmount] = useState(bill.amount);
+  const [dueDay, setDueDay] = useState(String(bill.dueDay));
+  const [totalInstallments, setTotalInstallments] = useState(
+    bill.totalInstallments !== null ? String(bill.totalInstallments) : ""
+  );
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  async function handleEdit(event: FormEvent) {
+    event.preventDefault();
+    setError(null);
+    setIsSaving(true);
+
+    try {
+      const res = await fetch(`/api/bills/${bill.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          amount: Number(amount),
+          dueDay: Number(dueDay),
+          ...(bill.totalInstallments !== null
+            ? { totalInstallments: Number(totalInstallments) }
+            : {}),
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error ?? "No se pudo guardar el cambio");
+        return;
+      }
+
+      setIsEditing(false);
+      await onChanged();
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
   async function handlePay(event: FormEvent) {
     event.preventDefault();
@@ -322,7 +361,52 @@ function BillRow({ bill, onChanged }: { bill: Bill; onChanged: () => Promise<voi
         </div>
       )}
 
-      {isPaying ? (
+      {isEditing ? (
+        <form onSubmit={handleEdit} className="mt-2 flex flex-col gap-2">
+          <TextField type="text" value={name} onChange={(e) => setName(e.target.value)} required />
+          <div className="flex gap-2">
+            <MoneyInput className="flex-1" value={amount} onChange={setAmount} />
+            <TextField
+              className="w-24"
+              type="number"
+              min="1"
+              max="31"
+              value={dueDay}
+              onChange={(e) => setDueDay(e.target.value)}
+              required
+            />
+          </div>
+          {bill.totalInstallments !== null && (
+            <label className="flex flex-col gap-1 text-xs font-semibold text-ink-soft">
+              Total de mensualidades
+              <TextField
+                type="number"
+                min="1"
+                value={totalInstallments}
+                onChange={(e) => setTotalInstallments(e.target.value)}
+                required
+              />
+            </label>
+          )}
+          <p className="text-[11px] text-ink-soft">
+            Los pagos ya registrados no cambian de nombre ni de monto retroactivamente.
+          </p>
+          {error && <p className="text-sm font-semibold text-negative">{error}</p>}
+          <div className="flex gap-2">
+            <Button type="submit" disabled={isSaving} className="px-3 py-1.5 text-xs">
+              {isSaving ? "Guardando…" : "Guardar"}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setIsEditing(false)}
+              className="px-3 py-1.5 text-xs"
+            >
+              Cancelar
+            </Button>
+          </div>
+        </form>
+      ) : isPaying ? (
         <form onSubmit={handlePay} className="mt-2 flex flex-col gap-2">
           <MoneyInput value={payAmount} onChange={setPayAmount} />
           {error && <p className="text-sm font-semibold text-negative">{error}</p>}
@@ -348,6 +432,13 @@ function BillRow({ bill, onChanged }: { bill: Bill; onChanged: () => Promise<voi
             className="text-ink-soft hover:text-ink"
           >
             Marcar como pagado
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsEditing(true)}
+            className="text-ink-soft hover:text-ink"
+          >
+            Editar
           </button>
           <button
             type="button"
