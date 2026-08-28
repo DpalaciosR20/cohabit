@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireHouseholdMember } from "@/lib/require-household";
 import { createSettlementSchema } from "@/lib/validation/settlement";
+import { getHouseholdBalances } from "@/lib/get-household-balances";
+
+const OVERPAYMENT_TOLERANCE = 0.01;
 
 export async function GET() {
   const context = await requireHouseholdMember();
@@ -51,6 +54,19 @@ export async function POST(request: Request) {
   if (!recipientMembership) {
     return NextResponse.json(
       { error: "Esa persona no pertenece a tu hogar" },
+      { status: 400 }
+    );
+  }
+
+  const balances = await getHouseholdBalances(context.householdId);
+  const currentBalance = balances.find((b) => b.userId === context.userId)?.balance ?? 0;
+  const amountOwed = currentBalance < 0 ? -currentBalance : 0;
+
+  if (parsed.data.amount > amountOwed + OVERPAYMENT_TOLERANCE) {
+    return NextResponse.json(
+      {
+        error: `No puedes registrar un pago mayor a lo que debes ($${amountOwed.toFixed(2)})`,
+      },
       { status: 400 }
     );
   }

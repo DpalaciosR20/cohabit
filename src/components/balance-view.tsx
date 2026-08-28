@@ -120,7 +120,7 @@ export function BalanceView({
                 (payingUserId === b.userId ? (
                   <SettlementForm
                     toUserId={b.userId}
-                    suggestedAmount={-currentUserBalance}
+                    maxAmount={-currentUserBalance}
                     onCancel={() => setPayingUserId(null)}
                     onSaved={async () => {
                       setPayingUserId(null);
@@ -174,26 +174,31 @@ export function BalanceView({
 
 function SettlementForm({
   toUserId,
-  suggestedAmount,
+  maxAmount,
   onCancel,
   onSaved,
 }: {
   toUserId: string;
-  suggestedAmount: number;
+  maxAmount: number;
   onCancel: () => void;
   onSaved: () => Promise<void>;
 }) {
-  const [amount, setAmount] = useState(
-    suggestedAmount > 0 ? suggestedAmount.toFixed(2) : ""
-  );
+  const [amount, setAmount] = useState(maxAmount > 0 ? maxAmount.toFixed(2) : "");
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  const exceedsDebt = Number(amount) > maxAmount + 0.01;
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
-    setIsSaving(true);
 
+    if (exceedsDebt) {
+      setError(`No puedes registrar un pago mayor a lo que debes ($${maxAmount.toFixed(2)})`);
+      return;
+    }
+
+    setIsSaving(true);
     try {
       const res = await fetch("/api/settlements", {
         method: "POST",
@@ -220,15 +225,21 @@ function SettlementForm({
         type="number"
         step="0.01"
         min="0.01"
+        max={maxAmount}
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
         required
       />
+      {exceedsDebt && !error && (
+        <p className="text-sm text-red-600">
+          No puedes pagar más de lo que debes (${maxAmount.toFixed(2)})
+        </p>
+      )}
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex gap-2">
         <button
           type="submit"
-          disabled={isSaving}
+          disabled={isSaving || exceedsDebt}
           className="rounded bg-black px-3 py-1.5 text-sm text-white disabled:opacity-50"
         >
           {isSaving ? "Guardando…" : "Confirmar pago"}
