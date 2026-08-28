@@ -84,12 +84,18 @@ export default async function Home() {
   );
   const totalPaid = [...paidByMember.values()].reduce((sum, v) => sum + v, 0);
 
+  // "Le debes a X" solo tiene sentido sin ambigüedad cuando el hogar es de
+  // 2 personas — con 3+ miembros, a quién le debes puede no ser el mismo
+  // "otro" que se elija arbitrariamente, así que se deja el desglose
+  // completo para la pantalla de Balance.
   const balanceHeadline =
     Math.abs(myBalance) < 0.005
       ? "Estás a mano"
-      : myBalance < 0 && otherMember
+      : myBalance < 0 && otherMember && members.length === 2
         ? `Le debes a ${otherMember.user.name}`
-        : "Te deben";
+        : myBalance < 0
+          ? "Debes"
+          : "Te deben";
 
   return (
     <main className="mx-auto flex max-w-md flex-col gap-6 pb-8 pt-6">
@@ -194,7 +200,10 @@ export default async function Home() {
           <span className="font-tabular text-xs text-ink-soft">{expensesThisMonth} · mes</span>
         </Link>
 
-        <Link href="/bills" className="flex items-center gap-3 py-3">
+        <Link
+          href="/bills"
+          className="flex items-center gap-3 border-b border-rule py-3"
+        >
           <span className="flex h-8 w-8 flex-none items-center justify-center rounded-[9px] bg-accent-soft">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="4" y="5" width="16" height="16" rx="3" />
@@ -203,6 +212,18 @@ export default async function Home() {
           </span>
           <span className="flex-1 text-sm font-semibold">Pagos recurrentes</span>
           <span className="font-tabular text-xs text-ink-soft">{activeBills}</span>
+        </Link>
+
+        <Link href="/household/members" className="flex items-center gap-3 py-3">
+          <span className="flex h-8 w-8 flex-none items-center justify-center rounded-[9px] bg-accent-soft">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+              <circle cx="10" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+          </span>
+          <span className="flex-1 text-sm font-semibold">Miembros del hogar</span>
+          <span className="font-tabular text-xs text-ink-soft">{members.length}</span>
         </Link>
       </div>
 

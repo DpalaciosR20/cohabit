@@ -16,6 +16,21 @@ describe("createHouseholdSchema", () => {
     const result = createHouseholdSchema.safeParse({ name: "a".repeat(101) });
     expect(result.success).toBe(false);
   });
+
+  it("accepts an optional targetMemberCount", () => {
+    const result = createHouseholdSchema.safeParse({ name: "Nuestro depa", targetMemberCount: 3 });
+    expect(result.success).toBe(true);
+  });
+
+  it("works without a targetMemberCount", () => {
+    const result = createHouseholdSchema.safeParse({ name: "Nuestro depa" });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a non-positive targetMemberCount", () => {
+    const result = createHouseholdSchema.safeParse({ name: "Nuestro depa", targetMemberCount: 0 });
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("joinHouseholdSchema", () => {

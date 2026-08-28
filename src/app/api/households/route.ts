@@ -30,6 +30,7 @@ export async function POST(request: Request) {
   const household = await prisma.household.create({
     data: {
       name: parsed.data.name,
+      targetMemberCount: parsed.data.targetMemberCount,
       members: {
         create: { userId: session.user.id, role: "OWNER" },
       },

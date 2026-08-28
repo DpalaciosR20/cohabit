@@ -55,6 +55,9 @@ model Household {
   name       String
   iconUrl    String?
   inviteCode String   @unique @default(cuid())
+  /// Cuántas personas se espera que vivan aquí — informativo (ej. para
+  /// mostrar "2/3 personas"), no un tope técnico que bloquee unirse.
+  targetMemberCount Int?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
