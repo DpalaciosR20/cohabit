@@ -9,7 +9,7 @@ export async function GET() {
     return NextResponse.json({ error: context.error }, { status: context.status });
   }
 
-  const [members, expenses, splits] = await Promise.all([
+  const [members, expenses, splits, settlements] = await Promise.all([
     prisma.householdMember.findMany({
       where: { householdId: context.householdId },
       include: { user: { select: { id: true, name: true } } },
@@ -22,12 +22,21 @@ export async function GET() {
       where: { expense: { householdId: context.householdId } },
       select: { userId: true, shareAmount: true },
     }),
+    prisma.settlement.findMany({
+      where: { householdId: context.householdId },
+      select: { fromUserId: true, toUserId: true, amount: true },
+    }),
   ]);
 
   const balances = computeBalances(
     members.map((m) => ({ userId: m.userId, name: m.user.name })),
     expenses.map((e) => ({ paidById: e.paidById, amount: Number(e.amount) })),
-    splits.map((s) => ({ userId: s.userId, shareAmount: Number(s.shareAmount) }))
+    splits.map((s) => ({ userId: s.userId, shareAmount: Number(s.shareAmount) })),
+    settlements.map((s) => ({
+      fromUserId: s.fromUserId,
+      toUserId: s.toUserId,
+      amount: Number(s.amount),
+    }))
   );
 
   return NextResponse.json({ balances });
