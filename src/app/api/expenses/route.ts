@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireHouseholdMember } from "@/lib/require-household";
 import { createExpenseSchema } from "@/lib/validation/expense";
 import { resolveExpenseShares } from "@/lib/get-household-split";
+import { resolveCategoryId } from "@/lib/resolve-category";
 
 export async function GET() {
   const context = await requireHouseholdMember();
@@ -16,6 +17,7 @@ export async function GET() {
       paidBy: { select: { id: true, name: true } },
       splits: { include: { user: { select: { id: true, name: true } } } },
       bill: { select: { id: true, name: true } },
+      category: { select: { id: true, name: true } },
     },
     orderBy: { date: "desc" },
   });
@@ -44,12 +46,10 @@ export async function POST(request: Request) {
   });
   const memberIds = members.map((m) => m.userId);
 
-  const shares = await resolveExpenseShares(
-    context.householdId,
-    parsed.data.amount,
-    memberIds,
-    context.userId
-  );
+  const [shares, categoryId] = await Promise.all([
+    resolveExpenseShares(context.householdId, parsed.data.amount, memberIds, context.userId),
+    resolveCategoryId(context.householdId, parsed.data.category),
+  ]);
 
   const expense = await prisma.expense.create({
     data: {
@@ -57,6 +57,7 @@ export async function POST(request: Request) {
       description: parsed.data.description,
       amount: parsed.data.amount,
       paidById: context.userId,
+      categoryId,
       splits: {
         create: shares.map((s) => ({ userId: s.userId, shareAmount: s.shareAmount })),
       },
@@ -64,6 +65,7 @@ export async function POST(request: Request) {
     include: {
       paidBy: { select: { id: true, name: true } },
       splits: { include: { user: { select: { id: true, name: true } } } },
+      category: { select: { id: true, name: true } },
     },
   });
 

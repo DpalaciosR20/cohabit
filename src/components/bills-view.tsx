@@ -5,6 +5,7 @@ import { useRealtimeRefetch } from "@/lib/use-realtime-refetch";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
 import { MoneyInput } from "@/components/ui/money-input";
+import { CategorySelect } from "@/components/ui/category-select";
 import { formatCurrency } from "@/lib/format-currency";
 
 type Bill = {
@@ -60,6 +61,7 @@ export function BillsView({
   const [useTotalAmount, setUseTotalAmount] = useState(false);
   const [totalAmount, setTotalAmount] = useState("");
   const [totalInstallments, setTotalInstallments] = useState("");
+  const [category, setCategory] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const computedMonthlyAmount =
@@ -104,6 +106,7 @@ export function BillsView({
         dueDay: Number(dueDay),
         installmentsRemaining: isInstallment ? Number(installments) : null,
         totalInstallments: isInstallment ? Number(totalInstallments) : null,
+        category: category || null,
         startsAt,
       }),
     });
@@ -123,6 +126,7 @@ export function BillsView({
     setUseTotalAmount(false);
     setTotalAmount("");
     setTotalInstallments("");
+    setCategory("");
     await loadBills();
   }
 
@@ -230,6 +234,7 @@ export function BillsView({
             required
           />
         </label>
+        <CategorySelect value={category} onChange={setCategory} />
         <Button type="submit">Agregar</Button>
       </form>
 
@@ -260,6 +265,7 @@ function BillRow({ bill, onChanged }: { bill: Bill; onChanged: () => Promise<voi
   const [totalInstallments, setTotalInstallments] = useState(
     bill.totalInstallments !== null ? String(bill.totalInstallments) : ""
   );
+  const [category, setCategory] = useState(bill.category?.name ?? "");
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -276,6 +282,7 @@ function BillRow({ bill, onChanged }: { bill: Bill; onChanged: () => Promise<voi
           name,
           amount: Number(amount),
           dueDay: Number(dueDay),
+          category: category || null,
           ...(bill.totalInstallments !== null
             ? { totalInstallments: Number(totalInstallments) }
             : {}),
@@ -333,8 +340,15 @@ function BillRow({ bill, onChanged }: { bill: Bill; onChanged: () => Promise<voi
 
   return (
     <li className="rounded-2xl border border-rule bg-surface px-4 py-3.5">
-      <div className="flex items-baseline justify-between">
-        <p className="text-sm font-bold text-ink">{bill.name}</p>
+      <div className="flex items-baseline justify-between gap-2">
+        <p className="flex items-center gap-1.5 text-sm font-bold text-ink">
+          {bill.name}
+          {bill.category && (
+            <span className="rounded-full bg-rule px-1.5 py-0.5 text-[10px] font-bold text-ink-soft">
+              {bill.category.name}
+            </span>
+          )}
+        </p>
         <span
           className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${STATUS_STYLE[bill.status]}`}
         >
@@ -388,6 +402,7 @@ function BillRow({ bill, onChanged }: { bill: Bill; onChanged: () => Promise<voi
               />
             </label>
           )}
+          <CategorySelect value={category} onChange={setCategory} />
           <p className="text-[11px] text-ink-soft">
             Los pagos ya registrados no cambian de nombre ni de monto retroactivamente.
           </p>

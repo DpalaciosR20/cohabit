@@ -32,6 +32,33 @@ describe("createExpenseSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("accepts a valid category", () => {
+    const result = createExpenseSchema.safeParse({
+      description: "Supermercado",
+      amount: 45.5,
+      category: "Comida",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a null category", () => {
+    const result = createExpenseSchema.safeParse({
+      description: "Supermercado",
+      amount: 45.5,
+      category: null,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a category outside the curated set", () => {
+    const result = createExpenseSchema.safeParse({
+      description: "Supermercado",
+      amount: 45.5,
+      category: "Vacaciones",
+    });
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("updateExpenseSchema", () => {

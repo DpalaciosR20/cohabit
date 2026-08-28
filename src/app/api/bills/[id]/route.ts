@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireHouseholdMember } from "@/lib/require-household";
 import { updateBillSchema } from "@/lib/validation/bill";
+import { resolveCategoryId } from "@/lib/resolve-category";
 
 async function getBillInHousehold(billId: string, householdId: string) {
   const bill = await prisma.bill.findUnique({ where: { id: billId } });
@@ -34,7 +35,12 @@ export async function PATCH(
     return NextResponse.json({ error: "Pago recurrente no encontrado" }, { status: 404 });
   }
 
-  const data: Prisma.BillUpdateInput = { ...parsed.data };
+  const { category, ...rest } = parsed.data;
+  const data: Prisma.BillUncheckedUpdateInput = { ...rest };
+
+  if (category !== undefined) {
+    data.categoryId = await resolveCategoryId(context.householdId, category);
+  }
 
   if (parsed.data.totalInstallments !== undefined) {
     if (existing.totalInstallments === null) {
@@ -57,7 +63,11 @@ export async function PATCH(
     data.installmentsRemaining = parsed.data.totalInstallments - paymentCount;
   }
 
-  const bill = await prisma.bill.update({ where: { id }, data });
+  const bill = await prisma.bill.update({
+    where: { id },
+    data,
+    include: { category: { select: { id: true, name: true } } },
+  });
   return NextResponse.json({ bill });
 }
 

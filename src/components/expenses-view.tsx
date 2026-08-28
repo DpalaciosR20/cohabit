@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRealtimeRefetch } from "@/lib/use-realtime-refetch";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
 import { MoneyInput } from "@/components/ui/money-input";
+import { CategorySelect } from "@/components/ui/category-select";
 import { formatCurrency } from "@/lib/format-currency";
 
 type Expense = {
@@ -16,6 +17,7 @@ type Expense = {
   paidBy: { id: string; name: string };
   splits: { userId: string; shareAmount: string; user: { id: string; name: string } }[];
   bill: { id: string; name: string } | null;
+  category: { id: string; name: string } | null;
 };
 
 export function ExpensesView({
@@ -29,6 +31,8 @@ export function ExpensesView({
   const [isLoading, setIsLoading] = useState(true);
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   async function loadExpenses() {
@@ -46,6 +50,18 @@ export function ExpensesView({
     loadExpenses();
   }, []);
 
+  const categoriesInUse = useMemo(
+    () =>
+      Array.from(
+        new Set(expenses.map((e) => e.category?.name).filter((name): name is string => !!name))
+      ),
+    [expenses]
+  );
+
+  const visibleExpenses = categoryFilter
+    ? expenses.filter((e) => e.category?.name === categoryFilter)
+    : expenses;
+
   async function handleAdd(event: FormEvent) {
     event.preventDefault();
     setError(null);
@@ -53,7 +69,11 @@ export function ExpensesView({
     const res = await fetch("/api/expenses", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ description, amount: Number(amount) }),
+      body: JSON.stringify({
+        description,
+        amount: Number(amount),
+        category: category || null,
+      }),
     });
 
     if (!res.ok) {
@@ -64,6 +84,7 @@ export function ExpensesView({
 
     setDescription("");
     setAmount("");
+    setCategory("");
     await loadExpenses();
   }
 
@@ -86,17 +107,31 @@ export function ExpensesView({
           <MoneyInput className="flex-1" value={amount} onChange={setAmount} />
           <Button type="submit">Registrar</Button>
         </div>
+        <CategorySelect value={category} onChange={setCategory} />
       </form>
 
       {error && <p className="text-sm font-semibold text-negative">{error}</p>}
 
+      {categoriesInUse.length > 0 && (
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-ink-soft">Filtrar:</span>
+          <CategorySelect
+            className="flex-1"
+            value={categoryFilter}
+            onChange={setCategoryFilter}
+          />
+        </div>
+      )}
+
       {isLoading ? (
         <p className="text-sm text-ink-soft">Cargando…</p>
-      ) : expenses.length === 0 ? (
-        <p className="text-sm text-ink-soft">Aún no hay gastos registrados.</p>
+      ) : visibleExpenses.length === 0 ? (
+        <p className="text-sm text-ink-soft">
+          {categoryFilter ? "No hay gastos en esta categoría." : "Aún no hay gastos registrados."}
+        </p>
       ) : (
         <ul className="flex flex-col gap-3">
-          {expenses.map((expense) => (
+          {visibleExpenses.map((expense) => (
             <ExpenseRow key={expense.id} expense={expense} onChanged={loadExpenses} />
           ))}
         </ul>
@@ -116,6 +151,7 @@ function ExpenseRow({
   const [isEditing, setIsEditing] = useState(false);
   const [description, setDescription] = useState(expense.description);
   const [amount, setAmount] = useState(expense.amount);
+  const [category, setCategory] = useState(expense.category?.name ?? "");
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -128,7 +164,11 @@ function ExpenseRow({
       const res = await fetch(`/api/expenses/${expense.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description, amount: Number(amount) }),
+        body: JSON.stringify({
+          description,
+          amount: Number(amount),
+          category: category || null,
+        }),
       });
 
       if (!res.ok) {
@@ -161,6 +201,7 @@ function ExpenseRow({
             required
           />
           <MoneyInput value={amount} onChange={setAmount} />
+          <CategorySelect value={category} onChange={setCategory} />
           {error && <p className="text-sm font-semibold text-negative">{error}</p>}
           <div className="flex gap-2">
             <Button type="submit" disabled={isSaving} className="px-3 py-1.5 text-xs">
@@ -196,6 +237,11 @@ function ExpenseRow({
           <span>
             Pagado por {expense.paidBy.name} · {new Date(expense.date).toLocaleDateString()}
           </span>
+          {expense.category && (
+            <span className="rounded-full bg-rule px-1.5 py-0.5 text-[10px] font-bold text-ink-soft">
+              {expense.category.name}
+            </span>
+          )}
           {expense.bill && (
             <span className="flex items-center gap-0.5 rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] font-bold text-accent">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
