@@ -4,6 +4,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useRealtimeRefetch } from "@/lib/use-realtime-refetch";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
+import { MoneyInput } from "@/components/ui/money-input";
+import { formatCurrency } from "@/lib/format-currency";
 
 type Bill = {
   id: string;
@@ -30,10 +32,6 @@ const STATUS_STYLE: Record<Bill["status"], string> = {
   "due-soon": "bg-accent-soft text-accent",
   upcoming: "bg-rule text-ink-soft",
 };
-
-function formatMoney(value: string) {
-  return `$${Number(value).toFixed(2)}`;
-}
 
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString();
@@ -166,16 +164,7 @@ export function BillsView({
         <div className="flex gap-2">
           {useTotalAmount ? (
             <>
-              <TextField
-                className="flex-1"
-                type="number"
-                step="0.01"
-                min="0.01"
-                placeholder="Monto total"
-                value={totalAmount}
-                onChange={(e) => setTotalAmount(e.target.value)}
-                required
-              />
+              <MoneyInput className="flex-1" value={totalAmount} onChange={setTotalAmount} />
               <TextField
                 className="w-32"
                 type="number"
@@ -187,16 +176,7 @@ export function BillsView({
               />
             </>
           ) : (
-            <TextField
-              className="flex-1"
-              type="number"
-              step="0.01"
-              min="0.01"
-              placeholder={isInstallment ? "Monto mensual" : "Monto estimado"}
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              required
-            />
+            <MoneyInput className="flex-1" value={amount} onChange={setAmount} />
           )}
           <TextField
             className="w-24"
@@ -212,7 +192,7 @@ export function BillsView({
         {useTotalAmount && computedMonthlyAmount !== null && (
           <p className="text-xs text-ink-soft">
             Mensualidad calculada:{" "}
-            <strong className="font-tabular text-ink">${computedMonthlyAmount.toFixed(2)}</strong>
+            <strong className="font-tabular text-ink">{formatCurrency(computedMonthlyAmount)}</strong>
           </p>
         )}
         {isInstallment && !useTotalAmount && (
@@ -323,7 +303,7 @@ function BillRow({ bill, onChanged }: { bill: Bill; onChanged: () => Promise<voi
         </span>
       </div>
       <p className="mt-0.5 text-xs text-ink-soft">
-        <span className="font-tabular">{formatMoney(bill.amount)}</span> · vence{" "}
+        <span className="font-tabular">{formatCurrency(bill.amount)}</span> · vence{" "}
         {formatDate(bill.dueDate)}
         {bill.installmentsRemaining !== null &&
           (bill.totalInstallments
@@ -344,14 +324,7 @@ function BillRow({ bill, onChanged }: { bill: Bill; onChanged: () => Promise<voi
 
       {isPaying ? (
         <form onSubmit={handlePay} className="mt-2 flex flex-col gap-2">
-          <TextField
-            type="number"
-            step="0.01"
-            min="0.01"
-            value={payAmount}
-            onChange={(e) => setPayAmount(e.target.value)}
-            required
-          />
+          <MoneyInput value={payAmount} onChange={setPayAmount} />
           {error && <p className="text-sm font-semibold text-negative">{error}</p>}
           <div className="flex gap-2">
             <Button type="submit" disabled={isSaving} className="px-3 py-1.5 text-xs">

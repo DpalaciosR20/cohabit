@@ -7,6 +7,7 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { ProfileSettingsButton } from "@/components/profile-settings-button";
 import { Button } from "@/components/ui/button";
 import { PROFILE_COLOR_HEX } from "@/lib/profile-colors";
+import { formatCurrency } from "@/lib/format-currency";
 
 function initials(name: string) {
   return name.trim().charAt(0).toUpperCase();
@@ -130,7 +131,7 @@ export default async function Home() {
           {balanceHeadline}
         </div>
         <div className="mt-1.5 font-tabular text-[38px] font-semibold leading-none tracking-tight">
-          ${Math.abs(myBalance).toFixed(2)}
+          {formatCurrency(Math.abs(myBalance))}
         </div>
 
         {totalPaid > 0 && members.length > 0 && (
@@ -153,7 +154,7 @@ export default async function Home() {
             <div className="mt-2 flex justify-between text-[11.5px] font-semibold text-ink-soft">
               {members.map((m) => (
                 <span key={m.userId} className="font-tabular">
-                  {m.user.name} ${(paidByMember.get(m.userId) ?? 0).toFixed(2)}
+                  {m.user.name} {formatCurrency(paidByMember.get(m.userId) ?? 0)}
                 </span>
               ))}
             </div>

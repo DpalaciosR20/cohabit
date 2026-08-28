@@ -5,6 +5,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useRealtimeRefetch } from "@/lib/use-realtime-refetch";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
+import { MoneyInput } from "@/components/ui/money-input";
+import { formatCurrency } from "@/lib/format-currency";
 
 type Expense = {
   id: string;
@@ -15,10 +17,6 @@ type Expense = {
   splits: { userId: string; shareAmount: string; user: { id: string; name: string } }[];
   bill: { id: string; name: string } | null;
 };
-
-function formatMoney(value: string) {
-  return `$${Number(value).toFixed(2)}`;
-}
 
 export function ExpensesView({
   householdName,
@@ -85,16 +83,7 @@ export function ExpensesView({
           required
         />
         <div className="flex gap-2">
-          <TextField
-            className="flex-1"
-            type="number"
-            step="0.01"
-            min="0.01"
-            placeholder="Monto"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            required
-          />
+          <MoneyInput className="flex-1" value={amount} onChange={setAmount} />
           <Button type="submit">Registrar</Button>
         </div>
       </form>
@@ -171,14 +160,7 @@ function ExpenseRow({
             onChange={(e) => setDescription(e.target.value)}
             required
           />
-          <TextField
-            type="number"
-            step="0.01"
-            min="0.01"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            required
-          />
+          <MoneyInput value={amount} onChange={setAmount} />
           {error && <p className="text-sm font-semibold text-negative">{error}</p>}
           <div className="flex gap-2">
             <Button type="submit" disabled={isSaving} className="px-3 py-1.5 text-xs">
@@ -208,7 +190,7 @@ function ExpenseRow({
       >
         <div className="flex items-baseline justify-between gap-2">
           <p className="text-sm font-bold text-ink">{expense.description}</p>
-          <p className="font-tabular text-sm font-bold text-ink">{formatMoney(expense.amount)}</p>
+          <p className="font-tabular text-sm font-bold text-ink">{formatCurrency(expense.amount)}</p>
         </div>
         <div className="flex items-center gap-1.5 text-xs text-ink-soft">
           <span>
@@ -241,7 +223,7 @@ function ExpenseRow({
           <ul className="flex flex-col gap-0.5 text-xs text-ink-soft">
             {expense.splits.map((split) => (
               <li key={split.userId} className="font-tabular">
-                {split.user.name}: {formatMoney(split.shareAmount)}
+                {split.user.name}: {formatCurrency(split.shareAmount)}
               </li>
             ))}
           </ul>
