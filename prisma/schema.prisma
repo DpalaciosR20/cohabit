@@ -16,6 +16,15 @@ enum HouseholdRole {
   MEMBER
 }
 
+/// Cómo se reparten los gastos nuevos del hogar.
+/// EVEN = parejo (default). MANUAL = % fijo por miembro (HouseholdMember.splitPercent).
+/// INCOME = % proporcional al ingreso de cada quien (User.monthlyIncome).
+enum SplitMode {
+  EVEN
+  MANUAL
+  INCOME
+}
+
 /// Paleta curada de 8 colores para identificar a cada usuario en la app
 /// (avatares, barra de balance, menciones con nombre) — no es un selector
 /// libre, para que cualquier combinación siga encajando con el sistema
@@ -37,6 +46,10 @@ model User {
   name         String
   avatarUrl    String?
   color        ProfileColor @default(INDIGO)
+  /// Ingreso mensual, usado solo para calcular el split proporcional en modo
+  /// INCOME — privado: nunca se expone el valor a otros miembros del hogar,
+  /// solo el % resultante que produce.
+  monthlyIncome Decimal? @db.Decimal(10, 2)
   passwordHash String
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
@@ -58,6 +71,11 @@ model Household {
   /// Cuántas personas se espera que vivan aquí — informativo (ej. para
   /// mostrar "2/3 personas"), no un tope técnico que bloquee unirse.
   targetMemberCount Int?
+  /// Ver enum SplitMode. Se resetea a EVEN cuando cambia la membresía y el
+  /// modo era MANUAL (los % dejarían de cubrir a los miembros actuales) —
+  /// INCOME no necesita ese reset porque se recalcula solo con quien haya
+  /// registrado ingreso en cada momento.
+  splitMode  SplitMode @default(EVEN)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

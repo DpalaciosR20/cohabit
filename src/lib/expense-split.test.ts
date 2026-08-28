@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { splitByShares, splitEvenly } from "./expense-split";
+import { incomeRatioShares, splitByShares, splitEvenly } from "./expense-split";
 
 describe("splitEvenly", () => {
   it("splits an even amount exactly in half between two people", () => {
@@ -128,5 +128,52 @@ describe("splitByShares", () => {
 
   it("throws when there are no members to split between", () => {
     expect(() => splitByShares(10, [], "a")).toThrow();
+  });
+});
+
+describe("incomeRatioShares", () => {
+  it("gives double the % to whoever earns double", () => {
+    const result = incomeRatioShares([
+      { userId: "a", income: 20000 },
+      { userId: "b", income: 10000 },
+    ]);
+    expect(result).not.toBeNull();
+    expect(result?.[0].percent).toBeCloseTo((2 / 3) * 100);
+    expect(result?.[1].percent).toBeCloseTo((1 / 3) * 100);
+  });
+
+  it("splits evenly when incomes are equal", () => {
+    const result = incomeRatioShares([
+      { userId: "a", income: 15000 },
+      { userId: "b", income: 15000 },
+    ]);
+    expect(result?.[0].percent).toBeCloseTo(50);
+    expect(result?.[1].percent).toBeCloseTo(50);
+  });
+
+  it("returns null when someone hasn't registered their income", () => {
+    const result = incomeRatioShares([
+      { userId: "a", income: 20000 },
+      { userId: "b", income: null },
+    ]);
+    expect(result).toBeNull();
+  });
+
+  it("returns null when someone's income is zero or negative", () => {
+    const result = incomeRatioShares([
+      { userId: "a", income: 20000 },
+      { userId: "b", income: 0 },
+    ]);
+    expect(result).toBeNull();
+  });
+
+  it("the resulting percentages always add up to 100", () => {
+    const result = incomeRatioShares([
+      { userId: "a", income: 17000 },
+      { userId: "b", income: 8300 },
+      { userId: "c", income: 5100 },
+    ]);
+    const total = result?.reduce((sum, s) => sum + s.percent, 0) ?? 0;
+    expect(total).toBeCloseTo(100);
   });
 });

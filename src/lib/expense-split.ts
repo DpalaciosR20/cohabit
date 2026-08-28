@@ -76,3 +76,24 @@ export function splitByShares(
     shareAmount: (centsByUserId.get(s.userId) ?? 0) / 100,
   }));
 }
+
+/**
+ * Convierte ingresos mensuales en porcentajes proporcionales (ej. si A gana
+ * el doble que B, a A le toca el 66.67% de los gastos). Devuelve null si
+ * falta el ingreso de alguien o el total es cero — no hay forma justa de
+ * calcular una proporción con ese dato incompleto, así que quien llame a
+ * esto debe decidir un fallback (típicamente split parejo).
+ */
+export function incomeRatioShares(
+  incomes: { userId: string; income: number | null }[]
+): MemberShare[] | null {
+  if (incomes.some((i) => i.income === null || i.income <= 0)) return null;
+
+  const total = incomes.reduce((sum, i) => sum + (i.income as number), 0);
+  if (total <= 0) return null;
+
+  return incomes.map((i) => ({
+    userId: i.userId,
+    percent: ((i.income as number) / total) * 100,
+  }));
+}

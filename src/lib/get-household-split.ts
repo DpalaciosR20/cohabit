@@ -1,21 +1,44 @@
 import { prisma } from "@/lib/prisma";
-import { splitByShares, splitEvenly, type MemberShare } from "@/lib/expense-split";
+import {
+  incomeRatioShares,
+  splitByShares,
+  splitEvenly,
+  type MemberShare,
+} from "@/lib/expense-split";
 
 /**
- * Devuelve el split configurado del hogar (uno por cada miembro actual,
- * sumando 100%), o null si usa el split parejo por default — ocurre cuando
- * ningún miembro tiene splitPercent configurado (el estado normal, y el
- * que queda tras cualquier cambio de membresía).
+ * Devuelve el split configurado del hogar según su SplitMode, o null si usa
+ * el split parejo — ya sea porque el modo es EVEN, o como fallback
+ * defensivo cuando MANUAL/INCOME no tienen datos completos (ej. alguien
+ * nuevo en el hogar aún no registró su %/ingreso).
  */
 export async function getHouseholdSplitShares(householdId: string): Promise<MemberShare[] | null> {
+  const household = await prisma.household.findUnique({
+    where: { id: householdId },
+    select: { splitMode: true },
+  });
+  if (!household || household.splitMode === "EVEN") return null;
+
+  if (household.splitMode === "MANUAL") {
+    const members = await prisma.householdMember.findMany({
+      where: { householdId },
+      select: { userId: true, splitPercent: true },
+    });
+    if (members.length === 0 || members.some((m) => m.splitPercent === null)) return null;
+    return members.map((m) => ({ userId: m.userId, percent: Number(m.splitPercent) }));
+  }
+
+  // INCOME
   const members = await prisma.householdMember.findMany({
     where: { householdId },
-    select: { userId: true, splitPercent: true },
+    select: { userId: true, user: { select: { monthlyIncome: true } } },
   });
-
-  if (members.length === 0 || members.some((m) => m.splitPercent === null)) return null;
-
-  return members.map((m) => ({ userId: m.userId, percent: Number(m.splitPercent) }));
+  return incomeRatioShares(
+    members.map((m) => ({
+      userId: m.userId,
+      income: m.user.monthlyIncome !== null ? Number(m.user.monthlyIncome) : null,
+    }))
+  );
 }
 
 /**

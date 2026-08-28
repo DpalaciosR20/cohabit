@@ -67,12 +67,24 @@ export async function DELETE(
       }
     }
 
-    // Un split personalizado ya no cubriría a los miembros restantes
-    // correctamente — se resetea a parejo hasta que se reconfigure.
-    await tx.householdMember.updateMany({
-      where: { householdId: context.householdId },
-      data: { splitPercent: null },
+    // Un split MANUAL ya no cubriría a los miembros restantes
+    // correctamente — se resetea a parejo hasta que se reconfigure. INCOME
+    // no necesita este reset (se recalcula solo con quien tenga ingreso
+    // registrado en cada momento).
+    const household = await tx.household.findUnique({
+      where: { id: context.householdId },
+      select: { splitMode: true },
     });
+    if (household?.splitMode === "MANUAL") {
+      await tx.household.update({
+        where: { id: context.householdId },
+        data: { splitMode: "EVEN" },
+      });
+      await tx.householdMember.updateMany({
+        where: { householdId: context.householdId },
+        data: { splitPercent: null },
+      });
+    }
   });
 
   return new NextResponse(null, { status: 204 });
