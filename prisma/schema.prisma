@@ -45,6 +45,7 @@ model Household {
   expenses      Expense[]
   categories    Category[]
   budgets       Budget[]
+  bills         Bill[]
 }
 
 model HouseholdMember {
@@ -94,6 +95,7 @@ model Category {
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
   expenses  Expense[]
   budgets   Budget[]
+  bills     Bill[]
 
   @@unique([householdId, name])
 }
@@ -105,12 +107,14 @@ model Expense {
   amount      Decimal  @db.Decimal(10, 2)
   paidById    String
   categoryId  String?
+  billId      String?
   date        DateTime @default(now())
   createdAt   DateTime @default(now())
 
   household Household      @relation(fields: [householdId], references: [id], onDelete: Cascade)
   paidBy    User           @relation("ExpensePaidBy", fields: [paidById], references: [id])
   category  Category?      @relation(fields: [categoryId], references: [id])
+  bill      Bill?          @relation(fields: [billId], references: [id])
   splits    ExpenseSplit[]
 }
 
@@ -124,6 +128,22 @@ model ExpenseSplit {
   user    User    @relation(fields: [userId], references: [id])
 
   @@unique([expenseId, userId])
+}
+
+model Bill {
+  id                    String   @id @default(cuid())
+  householdId           String
+  name                  String
+  amount                Decimal  @db.Decimal(10, 2)
+  dueDay                Int
+  categoryId            String?
+  installmentsRemaining Int?
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  category  Category? @relation(fields: [categoryId], references: [id])
+  payments  Expense[]
 }
 
 model Budget {
