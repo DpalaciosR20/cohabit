@@ -76,6 +76,12 @@ model HouseholdMember {
   householdId String
   role        HouseholdRole @default(MEMBER)
   joinedAt    DateTime      @default(now())
+  /// % de los gastos nuevos que le toca a este miembro. NULL en todos los
+  /// miembros = split parejo (default). Si está configurado, siempre debe
+  /// sumar 100% entre TODOS los miembros actuales del hogar — se resetea a
+  /// NULL para todo el hogar en cuanto cambia la membresía (alguien se une,
+  /// sale o es expulsado), para que nunca quede una configuración a medias.
+  splitPercent Decimal? @db.Decimal(5, 2)
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)

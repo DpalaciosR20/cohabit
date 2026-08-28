@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireHouseholdMember } from "@/lib/require-household";
 import { createExpenseSchema } from "@/lib/validation/expense";
-import { splitEvenly } from "@/lib/expense-split";
+import { resolveExpenseShares } from "@/lib/get-household-split";
 
 export async function GET() {
   const context = await requireHouseholdMember();
@@ -44,7 +44,12 @@ export async function POST(request: Request) {
   });
   const memberIds = members.map((m) => m.userId);
 
-  const shares = splitEvenly(parsed.data.amount, memberIds, context.userId);
+  const shares = await resolveExpenseShares(
+    context.householdId,
+    parsed.data.amount,
+    memberIds,
+    context.userId
+  );
 
   const expense = await prisma.expense.create({
     data: {
