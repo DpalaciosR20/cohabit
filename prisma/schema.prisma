@@ -141,6 +141,11 @@ model Bill {
   dueDay                Int
   categoryId            String?
   installmentsRemaining Int?
+  /// El total original del plan (ej. 12 meses) — separado de
+  /// installmentsRemaining para poder mostrar el progreso ("5/12") y para
+  /// no perder ese dato cuando algunas mensualidades ya se pagaron antes de
+  /// registrar la compra en la app.
+  totalInstallments     Int?
   /// Primer mes en que este Bill empieza a generar vencimientos — antes de
   /// este mes, nunca se marca como "vencido" ni "vence pronto".
   startsAt              DateTime @default(now())

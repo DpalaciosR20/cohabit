@@ -8,6 +8,7 @@ const updateBillSchema = z.object({
   amount: z.number().positive().max(1_000_000).optional(),
   dueDay: z.number().int().min(1).max(31).optional(),
   installmentsRemaining: z.number().int().positive().nullable().optional(),
+  totalInstallments: z.number().int().positive().nullable().optional(),
   isActive: z.boolean().optional(),
 });
 

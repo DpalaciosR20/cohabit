@@ -9,6 +9,7 @@ type Bill = {
   amount: string;
   dueDay: number;
   installmentsRemaining: number | null;
+  totalInstallments: number | null;
   category: { id: string; name: string } | null;
   dueDate: string;
   status: "paid" | "overdue" | "due-soon" | "upcoming";
@@ -102,6 +103,7 @@ export function BillsView({
         amount: effectiveAmount,
         dueDay: Number(dueDay),
         installmentsRemaining: isInstallment ? Number(installments) : null,
+        totalInstallments: isInstallment ? Number(totalInstallments) : null,
         startsAt,
       }),
     });
@@ -209,6 +211,20 @@ export function BillsView({
             Mensualidad calculada: <strong>${computedMonthlyAmount.toFixed(2)}</strong>
           </p>
         )}
+        {isInstallment && !useTotalAmount && (
+          <label className="flex flex-col gap-1 text-sm text-zinc-600">
+            Total de mensualidades
+            <input
+              className="rounded border px-3 py-2 text-zinc-900"
+              type="number"
+              min="1"
+              placeholder="ej. 12"
+              value={totalInstallments}
+              onChange={(e) => setTotalInstallments(e.target.value)}
+              required
+            />
+          </label>
+        )}
         {isInstallment && (
           <label className="flex flex-col gap-1 text-sm text-zinc-600">
             Mensualidades restantes
@@ -216,9 +232,7 @@ export function BillsView({
               className="rounded border px-3 py-2 text-zinc-900"
               type="number"
               min="1"
-              placeholder={
-                useTotalAmount ? "ej. si ya pagaste algunas, cuántas te faltan" : undefined
-              }
+              placeholder="ej. si ya pagaste algunas, cuántas te faltan"
               value={installments}
               onChange={(e) => setInstallments(e.target.value)}
               required
@@ -311,10 +325,22 @@ function BillRow({ bill, onChanged }: { bill: Bill; onChanged: () => Promise<voi
       </div>
       <p className="text-xs text-zinc-500">
         {formatMoney(bill.amount)} · vence {formatDate(bill.dueDate)}
-        {bill.installmentsRemaining !== null
-          ? ` · ${bill.installmentsRemaining} mensualidad(es) restante(s)`
-          : ""}
+        {bill.installmentsRemaining !== null &&
+          (bill.totalInstallments
+            ? ` · ${bill.installmentsRemaining}/${bill.totalInstallments} mensualidades restantes`
+            : ` · ${bill.installmentsRemaining} mensualidad(es) restante(s)`)}
       </p>
+
+      {bill.installmentsRemaining !== null && bill.totalInstallments && (
+        <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-zinc-100">
+          <div
+            className="h-1 rounded-full bg-black"
+            style={{
+              width: `${((bill.totalInstallments - bill.installmentsRemaining) / bill.totalInstallments) * 100}%`,
+            }}
+          />
+        </div>
+      )}
 
       {isPaying ? (
         <form onSubmit={handlePay} className="mt-2 flex flex-col gap-2">

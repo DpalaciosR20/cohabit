@@ -34,6 +34,7 @@ export async function GET() {
         amount: bill.amount,
         dueDay: bill.dueDay,
         installmentsRemaining: bill.installmentsRemaining,
+        totalInstallments: bill.totalInstallments,
         category: bill.category,
         dueDate,
         status,
@@ -70,6 +71,7 @@ export async function POST(request: Request) {
       amount: parsed.data.amount,
       dueDay: parsed.data.dueDay,
       installmentsRemaining: parsed.data.installmentsRemaining ?? null,
+      totalInstallments: parsed.data.totalInstallments ?? null,
       startsAt,
     },
   });
