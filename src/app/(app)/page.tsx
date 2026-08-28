@@ -4,7 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { getUserHouseholdMembership } from "@/lib/households";
 import { getHouseholdBalances } from "@/lib/get-household-balances";
 import { SignOutButton } from "@/components/sign-out-button";
+import { ProfileSettingsButton } from "@/components/profile-settings-button";
 import { Button } from "@/components/ui/button";
+import { PROFILE_COLOR_HEX } from "@/lib/profile-colors";
 
 function initials(name: string) {
   return name.trim().charAt(0).toUpperCase();
@@ -56,7 +58,7 @@ export default async function Home() {
     await Promise.all([
       prisma.householdMember.findMany({
         where: { householdId },
-        include: { user: { select: { id: true, name: true } } },
+        include: { user: { select: { id: true, name: true, color: true } } },
       }),
       prisma.expense.groupBy({
         by: ["paidById"],
@@ -102,18 +104,23 @@ export default async function Home() {
             {membership.household.name}
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <div className="flex">
             {members.map((m) => (
               <div
                 key={m.userId}
                 className="-ml-2 flex h-6 w-6 items-center justify-center rounded-full border-2 border-bg text-[10px] font-bold text-white first:ml-0"
-                style={{ background: m.userId === session.user.id ? "var(--color-accent)" : "var(--color-partner)" }}
+                style={{ background: PROFILE_COLOR_HEX[m.user.color] }}
               >
                 {initials(m.user.name)}
               </div>
             ))}
           </div>
+          <ProfileSettingsButton
+            initialColor={
+              members.find((m) => m.userId === session.user.id)?.user.color ?? "INDIGO"
+            }
+          />
           <SignOutButton />
         </div>
       </div>
@@ -137,7 +144,7 @@ export default async function Home() {
                     key={m.userId}
                     style={{
                       width: `${pct}%`,
-                      background: m.userId === session.user.id ? "var(--color-accent)" : "var(--color-partner)",
+                      background: PROFILE_COLOR_HEX[m.user.color],
                     }}
                   />
                 );

@@ -4,8 +4,9 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useRealtimeRefetch } from "@/lib/use-realtime-refetch";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
+import { PROFILE_COLOR_HEX, type ProfileColor } from "@/lib/profile-colors";
 
-type MemberBalance = { userId: string; name: string; balance: number };
+type MemberBalance = { userId: string; name: string; balance: number; color: ProfileColor };
 
 type Settlement = {
   id: string;
@@ -97,14 +98,14 @@ export function BalanceView({
         <p className="text-sm text-ink-soft">Cargando…</p>
       ) : (
         <ul className="flex flex-col gap-3">
-          {balances.map((b, i) => (
+          {balances.map((b) => (
             <li
               key={b.userId}
               className="flex items-center gap-3 rounded-2xl border border-rule bg-surface px-4 py-3.5"
             >
               <div
                 className="flex h-9 w-9 flex-none items-center justify-center rounded-full text-sm font-bold text-white"
-                style={{ background: i % 2 === 0 ? "var(--color-accent)" : "var(--color-partner)" }}
+                style={{ background: PROFILE_COLOR_HEX[b.color] }}
               >
                 {b.name.charAt(0).toUpperCase()}
               </div>
