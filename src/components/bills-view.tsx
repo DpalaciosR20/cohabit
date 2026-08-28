@@ -36,6 +36,11 @@ function formatDate(value: string) {
   return new Date(value).toLocaleDateString();
 }
 
+function currentMonthValue() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
 export function BillsView({
   householdName,
   householdId,
@@ -50,6 +55,7 @@ export function BillsView({
   const [dueDay, setDueDay] = useState("");
   const [isInstallment, setIsInstallment] = useState(false);
   const [installments, setInstallments] = useState("");
+  const [startsAt, setStartsAt] = useState(currentMonthValue());
   const [error, setError] = useState<string | null>(null);
 
   async function loadBills() {
@@ -82,6 +88,7 @@ export function BillsView({
         amount: Number(amount),
         dueDay: Number(dueDay),
         installmentsRemaining: isInstallment ? Number(installments) : null,
+        startsAt,
       }),
     });
 
@@ -96,6 +103,7 @@ export function BillsView({
     setDueDay("");
     setIsInstallment(false);
     setInstallments("");
+    setStartsAt(currentMonthValue());
     await loadBills();
   }
 
@@ -115,13 +123,21 @@ export function BillsView({
           onChange={(e) => setName(e.target.value)}
           required
         />
+        <label className="flex items-center gap-2 text-sm text-zinc-600">
+          <input
+            type="checkbox"
+            checked={isInstallment}
+            onChange={(e) => setIsInstallment(e.target.checked)}
+          />
+          Es una compra a meses
+        </label>
         <div className="flex gap-2">
           <input
             className="flex-1 rounded border px-3 py-2"
             type="number"
             step="0.01"
             min="0.01"
-            placeholder="Monto estimado"
+            placeholder={isInstallment ? "Monto mensual" : "Monto estimado"}
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             required
@@ -137,14 +153,6 @@ export function BillsView({
             required
           />
         </div>
-        <label className="flex items-center gap-2 text-sm text-zinc-600">
-          <input
-            type="checkbox"
-            checked={isInstallment}
-            onChange={(e) => setIsInstallment(e.target.checked)}
-          />
-          Es una compra a meses
-        </label>
         {isInstallment && (
           <input
             className="rounded border px-3 py-2"
@@ -156,6 +164,16 @@ export function BillsView({
             required
           />
         )}
+        <label className="flex flex-col gap-1 text-sm text-zinc-600">
+          Primer mes de cobro
+          <input
+            className="rounded border px-3 py-2 text-zinc-900"
+            type="month"
+            value={startsAt}
+            onChange={(e) => setStartsAt(e.target.value)}
+            required
+          />
+        </label>
         <button type="submit" className="rounded bg-black px-4 py-2 text-white">
           Agregar
         </button>

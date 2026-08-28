@@ -51,4 +51,28 @@ describe("computeBillStatus", () => {
     expect(result.status).toBe("paid");
     expect(result.dueDate).toEqual(new Date(2027, 0, 5));
   });
+
+  it("never shows overdue before startsAt's month, even if dueDay already passed this month", () => {
+    // Compraste hoy (25 de agosto), dueDay=5 ya pasó este mes, pero el primer
+    // cobro real es hasta septiembre — no debe verse como vencido en agosto.
+    const today = new Date(2026, 7, 25);
+    const startsAt = new Date(2026, 8, 1);
+    const result = computeBillStatus(5, null, today, startsAt);
+    expect(result.status).toBe("upcoming");
+    expect(result.dueDate).toEqual(new Date(2026, 8, 5));
+  });
+
+  it("behaves normally once today reaches startsAt's month", () => {
+    const today = new Date(2026, 8, 10);
+    const startsAt = new Date(2026, 8, 1);
+    const result = computeBillStatus(5, null, today, startsAt);
+    expect(result.status).toBe("overdue");
+    expect(result.dueDate).toEqual(new Date(2026, 8, 5));
+  });
+
+  it("defaults startsAt to today when not provided (backwards compatible)", () => {
+    const today = new Date(2026, 2, 25);
+    const result = computeBillStatus(20, null, today);
+    expect(result.status).toBe("overdue");
+  });
 });

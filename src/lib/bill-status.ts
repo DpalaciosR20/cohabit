@@ -17,6 +17,13 @@ function isSameMonth(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
 }
 
+/** Compara meses calendario, sin importar el día — para saber si `a` es anterior a `b`. */
+function isBeforeMonth(a: Date, b: Date): boolean {
+  const aKey = a.getFullYear() * 12 + a.getMonth();
+  const bKey = b.getFullYear() * 12 + b.getMonth();
+  return aKey < bKey;
+}
+
 function daysBetween(a: Date, b: Date): number {
   const msPerDay = 1000 * 60 * 60 * 24;
   return Math.round((b.getTime() - a.getTime()) / msPerDay);
@@ -27,12 +34,25 @@ function daysBetween(a: Date, b: Date): number {
  * día del mes en que vence y (si existe) la fecha del último pago registrado.
  * No se guarda una "próxima fecha" en la base de datos — siempre se deriva,
  * igual que el balance, para que nunca pueda desincronizarse.
+ *
+ * `startsAt` es el primer mes en que el Bill genera vencimientos — antes de
+ * ese mes, nunca se marca "vencido" ni "vence pronto", sin importar qué tan
+ * cerca esté el dueDay (ej. compraste algo hoy pero tu primer pago es hasta
+ * el próximo mes).
  */
 export function computeBillStatus(
   dueDay: number,
   lastPaymentDate: Date | null,
-  today: Date
+  today: Date,
+  startsAt: Date = today
 ): BillStatusResult {
+  if (isBeforeMonth(today, startsAt)) {
+    return {
+      dueDate: clampToMonth(startsAt.getFullYear(), startsAt.getMonth(), dueDay),
+      status: "upcoming",
+    };
+  }
+
   const dueDateThisPeriod = clampToMonth(today.getFullYear(), today.getMonth(), dueDay);
   const paidThisPeriod = lastPaymentDate !== null && isSameMonth(lastPaymentDate, today);
 

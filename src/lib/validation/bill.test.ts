@@ -40,6 +40,26 @@ describe("createBillSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("accepts a startsAt in YYYY-MM format", () => {
+    const result = createBillSchema.safeParse({
+      name: "Internet",
+      amount: 600,
+      dueDay: 5,
+      startsAt: "2026-09",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a malformed startsAt", () => {
+    const result = createBillSchema.safeParse({
+      name: "Internet",
+      amount: 600,
+      dueDay: 5,
+      startsAt: "September 2026",
+    });
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("payBillSchema", () => {
