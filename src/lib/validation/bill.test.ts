@@ -17,6 +17,26 @@ describe("createBillSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("accepts a valid category", () => {
+    const result = createBillSchema.safeParse({
+      name: "Internet",
+      amount: 600,
+      dueDay: 5,
+      category: "Servicios",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a category outside the curated set", () => {
+    const result = createBillSchema.safeParse({
+      name: "Internet",
+      amount: 600,
+      dueDay: 5,
+      category: "Vacaciones",
+    });
+    expect(result.success).toBe(false);
+  });
+
   it("rejects a dueDay outside 1-31", () => {
     expect(
       createBillSchema.safeParse({ name: "Renta", amount: 100, dueDay: 32 }).success
@@ -113,6 +133,18 @@ describe("updateBillSchema", () => {
 
   it("rejects a non-positive totalInstallments", () => {
     expect(updateBillSchema.safeParse({ totalInstallments: 0 }).success).toBe(false);
+  });
+
+  it("accepts a valid category", () => {
+    expect(updateBillSchema.safeParse({ category: "Servicios" }).success).toBe(true);
+  });
+
+  it("accepts clearing the category with null", () => {
+    expect(updateBillSchema.safeParse({ category: null }).success).toBe(true);
+  });
+
+  it("rejects a category outside the curated set", () => {
+    expect(updateBillSchema.safeParse({ category: "Vacaciones" }).success).toBe(false);
   });
 });
 

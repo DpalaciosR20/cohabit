@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireHouseholdMember } from "@/lib/require-household";
 import { updateExpenseSchema } from "@/lib/validation/expense";
 import { resolveExpenseShares } from "@/lib/get-household-split";
+import { resolveCategoryId } from "@/lib/resolve-category";
 
 async function getExpenseInHousehold(expenseId: string, householdId: string) {
   const expense = await prisma.expense.findUnique({ where: { id: expenseId } });
@@ -38,12 +39,15 @@ export async function PATCH(
     where: { householdId: context.householdId },
     select: { userId: true },
   });
-  const shares = await resolveExpenseShares(
-    context.householdId,
-    parsed.data.amount,
-    members.map((m) => m.userId),
-    existing.paidById
-  );
+  const [shares, categoryId] = await Promise.all([
+    resolveExpenseShares(
+      context.householdId,
+      parsed.data.amount,
+      members.map((m) => m.userId),
+      existing.paidById
+    ),
+    resolveCategoryId(context.householdId, parsed.data.category),
+  ]);
 
   const expense = await prisma.$transaction(async (tx) => {
     await tx.expenseSplit.deleteMany({ where: { expenseId: id } });
@@ -52,6 +56,7 @@ export async function PATCH(
       data: {
         description: parsed.data.description,
         amount: parsed.data.amount,
+        categoryId,
         splits: {
           create: shares.map((s) => ({ userId: s.userId, shareAmount: s.shareAmount })),
         },
@@ -59,6 +64,7 @@ export async function PATCH(
       include: {
         paidBy: { select: { id: true, name: true } },
         splits: { include: { user: { select: { id: true, name: true } } } },
+        category: { select: { id: true, name: true } },
       },
     });
   });

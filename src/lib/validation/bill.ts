@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { EXPENSE_CATEGORIES } from "@/lib/expense-categories";
 
 export const createBillSchema = z
   .object({
@@ -10,6 +11,7 @@ export const createBillSchema = z
     dueDay: z.number().int().min(1, "Debe ser entre 1 y 31").max(31, "Debe ser entre 1 y 31"),
     installmentsRemaining: z.number().int().positive().nullable().optional(),
     totalInstallments: z.number().int().positive().nullable().optional(),
+    category: z.enum(EXPENSE_CATEGORIES).nullable().optional(),
     // Formato "YYYY-MM" (lo que produce <input type="month">). Si no se manda,
     // el Bill empieza a generar vencimientos desde el mes actual.
     startsAt: z
@@ -43,6 +45,7 @@ export const updateBillSchema = z.object({
     .optional(),
   dueDay: z.number().int().min(1, "Debe ser entre 1 y 31").max(31, "Debe ser entre 1 y 31").optional(),
   totalInstallments: z.number().int().positive().optional(),
+  category: z.enum(EXPENSE_CATEGORIES).nullable().optional(),
   isActive: z.boolean().optional(),
 });
 

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireHouseholdMember } from "@/lib/require-household";
 import { createBillSchema } from "@/lib/validation/bill";
 import { computeBillStatus } from "@/lib/bill-status";
+import { resolveCategoryId } from "@/lib/resolve-category";
 
 export async function GET() {
   const context = await requireHouseholdMember();
@@ -64,6 +65,8 @@ export async function POST(request: Request) {
     ? new Date(`${parsed.data.startsAt}-01T00:00:00`)
     : new Date();
 
+  const categoryId = await resolveCategoryId(context.householdId, parsed.data.category);
+
   const bill = await prisma.bill.create({
     data: {
       householdId: context.householdId,
@@ -72,8 +75,10 @@ export async function POST(request: Request) {
       dueDay: parsed.data.dueDay,
       installmentsRemaining: parsed.data.installmentsRemaining ?? null,
       totalInstallments: parsed.data.totalInstallments ?? null,
+      categoryId,
       startsAt,
     },
+    include: { category: { select: { id: true, name: true } } },
   });
 
   return NextResponse.json({ bill }, { status: 201 });
