@@ -7,6 +7,12 @@ export const createHouseholdSchema = z.object({
 
 export type CreateHouseholdInput = z.infer<typeof createHouseholdSchema>;
 
+export const renameHouseholdSchema = z.object({
+  name: z.string().trim().min(1, "El nombre es requerido").max(100),
+});
+
+export type RenameHouseholdInput = z.infer<typeof renameHouseholdSchema>;
+
 export const joinHouseholdSchema = z.object({
   inviteCode: z.string().trim().min(1, "El código de invitación es requerido"),
 });

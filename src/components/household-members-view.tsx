@@ -82,10 +82,12 @@ export function HouseholdMembersView({
     <main className="mx-auto flex max-w-md flex-col gap-5 p-5">
       <div>
         <h1 className="text-xl font-extrabold tracking-tight text-ink">Miembros del hogar</h1>
-        <p className="text-xs font-semibold text-ink-soft">
-          {householdName}
-          {targetMemberCount ? ` · ${members.length} de ${targetMemberCount} personas` : ""}
-        </p>
+        <HouseholdNameEditor
+          householdName={householdName}
+          targetMemberCount={targetMemberCount}
+          memberCount={members.length}
+          onChanged={() => router.refresh()}
+        />
       </div>
 
       {error && <p className="text-sm font-semibold text-negative">{error}</p>}
@@ -430,5 +432,93 @@ function SplitConfig({
         </div>
       )}
     </div>
+  );
+}
+
+function HouseholdNameEditor({
+  householdName,
+  targetMemberCount,
+  memberCount,
+  onChanged,
+}: {
+  householdName: string;
+  targetMemberCount: number | null;
+  memberCount: number;
+  onChanged: () => void;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [name, setName] = useState(householdName);
+  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  async function handleSave(event: FormEvent) {
+    event.preventDefault();
+    setError(null);
+    setIsSaving(true);
+    try {
+      const res = await fetch("/api/households", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error ?? "No se pudo renombrar el hogar");
+        return;
+      }
+
+      setIsEditing(false);
+      onChanged();
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  if (isEditing) {
+    return (
+      <form onSubmit={handleSave} className="mt-1 flex flex-col gap-1.5">
+        <div className="flex gap-2">
+          <TextField
+            className="flex-1"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            autoFocus
+          />
+          <Button type="submit" disabled={isSaving} className="px-3 py-1.5 text-xs">
+            {isSaving ? "Guardando…" : "Guardar"}
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              setName(householdName);
+              setError(null);
+              setIsEditing(false);
+            }}
+            className="px-3 py-1.5 text-xs"
+          >
+            Cancelar
+          </Button>
+        </div>
+        {error && <p className="text-xs font-semibold text-negative">{error}</p>}
+      </form>
+    );
+  }
+
+  return (
+    <p className="flex items-center gap-1.5 text-xs font-semibold text-ink-soft">
+      {householdName}
+      {targetMemberCount ? ` · ${memberCount} de ${targetMemberCount} personas` : ""}
+      <button
+        type="button"
+        onClick={() => setIsEditing(true)}
+        className="text-accent hover:underline"
+      >
+        Editar
+      </button>
+    </p>
   );
 }

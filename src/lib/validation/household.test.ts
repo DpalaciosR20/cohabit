@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createHouseholdSchema, joinHouseholdSchema } from "./household";
+import { createHouseholdSchema, joinHouseholdSchema, renameHouseholdSchema } from "./household";
 
 describe("createHouseholdSchema", () => {
   it("accepts a valid name", () => {
@@ -30,6 +30,20 @@ describe("createHouseholdSchema", () => {
   it("rejects a non-positive targetMemberCount", () => {
     const result = createHouseholdSchema.safeParse({ name: "Nuestro depa", targetMemberCount: 0 });
     expect(result.success).toBe(false);
+  });
+});
+
+describe("renameHouseholdSchema", () => {
+  it("accepts a valid name", () => {
+    expect(renameHouseholdSchema.safeParse({ name: "Depa nuevo" }).success).toBe(true);
+  });
+
+  it("rejects an empty name", () => {
+    expect(renameHouseholdSchema.safeParse({ name: "   " }).success).toBe(false);
+  });
+
+  it("rejects a name over 100 characters", () => {
+    expect(renameHouseholdSchema.safeParse({ name: "a".repeat(101) }).success).toBe(false);
   });
 });
 
