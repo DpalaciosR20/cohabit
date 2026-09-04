@@ -55,7 +55,7 @@ export default async function Home() {
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
 
-  const [members, paidTotals, pendingItems, expensesThisMonth, activeBills] =
+  const [members, paidTotals, pendingItems, expensesThisMonth, activeBills, personalExpensesThisMonth] =
     await Promise.all([
       prisma.householdMember.findMany({
         where: { householdId },
@@ -73,6 +73,9 @@ export default async function Home() {
         where: { householdId, date: { gte: startOfMonth } },
       }),
       prisma.bill.count({ where: { householdId, isActive: true } }),
+      prisma.personalExpense.count({
+        where: { userId: session.user.id, date: { gte: startOfMonth } },
+      }),
     ]);
 
   const balances = await getHouseholdBalances(householdId);
@@ -214,7 +217,10 @@ export default async function Home() {
           <span className="font-tabular text-xs text-ink-soft">{activeBills}</span>
         </Link>
 
-        <Link href="/household/members" className="flex items-center gap-3 py-3">
+        <Link
+          href="/household/members"
+          className="flex items-center gap-3 border-b border-rule py-3"
+        >
           <span className="flex h-8 w-8 flex-none items-center justify-center rounded-[9px] bg-accent-soft">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
@@ -224,6 +230,17 @@ export default async function Home() {
           </span>
           <span className="flex-1 text-sm font-semibold">Miembros del hogar</span>
           <span className="font-tabular text-xs text-ink-soft">{members.length}</span>
+        </Link>
+
+        <Link href="/personal" className="flex items-center gap-3 py-3">
+          <span className="flex h-8 w-8 flex-none items-center justify-center rounded-[9px] bg-accent-soft">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v5l3 3" />
+            </svg>
+          </span>
+          <span className="flex-1 text-sm font-semibold">Gastos personales</span>
+          <span className="font-tabular text-xs text-ink-soft">{personalExpensesThisMonth} · mes</span>
         </Link>
       </div>
 

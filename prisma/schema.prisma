@@ -46,9 +46,10 @@ model User {
   name         String
   avatarUrl    String?
   color        ProfileColor @default(INDIGO)
-  /// Ingreso mensual, usado solo para calcular el split proporcional en modo
-  /// INCOME — privado: nunca se expone el valor a otros miembros del hogar,
-  /// solo el % resultante que produce.
+  /// Ingreso mensual — privado, nunca se expone a otros miembros del hogar.
+  /// Se usa para calcular el split proporcional en modo INCOME (solo se ve
+  /// el % resultante) y como el lado "ingresos" del balance de gastos
+  /// personales.
   monthlyIncome Decimal? @db.Decimal(10, 2)
   passwordHash String
   createdAt    DateTime     @default(now())
@@ -61,6 +62,7 @@ model User {
   expenseSplits       ExpenseSplit[]
   settlementsPaid     Settlement[]      @relation("SettlementFrom")
   settlementsReceived Settlement[]      @relation("SettlementTo")
+  personalExpenses    PersonalExpense[]
 }
 
 model Household {
@@ -229,4 +231,20 @@ model Budget {
   category  Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@unique([householdId, categoryId, month, year])
+}
+
+/// Un gasto puramente personal — no se reparte con nadie, no pertenece a
+/// ningún Household. `category` es el nombre curado (ver EXPENSE_CATEGORIES
+/// en el código), guardado como texto libre en vez de una relación a
+/// Category porque esa tabla está scoped a un hogar y esto es del usuario.
+model PersonalExpense {
+  id          String   @id @default(cuid())
+  userId      String
+  description String
+  amount      Decimal  @db.Decimal(10, 2)
+  category    String?
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
