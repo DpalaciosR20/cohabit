@@ -63,6 +63,7 @@ model User {
   settlementsPaid     Settlement[]      @relation("SettlementFrom")
   settlementsReceived Settlement[]      @relation("SettlementTo")
   personalExpenses    PersonalExpense[]
+  personalBudgets     PersonalBudget[]
 }
 
 model Household {
@@ -247,4 +248,22 @@ model PersonalExpense {
   createdAt   DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// Límite mensual que el usuario se pone para una categoría de sus gastos
+/// personales — un solo valor "vigente" por categoría (no historial mes a
+/// mes como el Budget del hogar), comparado siempre contra el mes en curso.
+/// Solo un aviso visual (barra de progreso) — no hay infraestructura de
+/// notificaciones (email/push) en la app para algo más activo.
+model PersonalBudget {
+  id           String  @id @default(cuid())
+  userId       String
+  /// Nombre curado (ver EXPENSE_CATEGORIES) — mismo criterio que
+  /// PersonalExpense.category, texto libre en vez de relación a Category.
+  category     String
+  monthlyLimit Decimal @db.Decimal(10, 2)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, category])
 }
