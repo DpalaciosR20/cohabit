@@ -8,6 +8,7 @@ import { TextField } from "@/components/ui/text-field";
 import { MoneyInput } from "@/components/ui/money-input";
 import { CategorySelect } from "@/components/ui/category-select";
 import { formatCurrency } from "@/lib/format-currency";
+import { EXPENSE_CATEGORIES } from "@/lib/expense-categories";
 
 type Expense = {
   id: string;
@@ -94,6 +95,8 @@ export function ExpensesView({
         <h1 className="text-xl font-extrabold tracking-tight text-ink">Gastos</h1>
         <p className="text-xs font-semibold text-ink-soft">{householdName}</p>
       </div>
+
+      <HouseholdBudgets refreshKey={expenses.length} />
 
       <form onSubmit={handleAdd} className="flex flex-col gap-3">
         <TextField
@@ -292,5 +295,170 @@ function ExpenseRow({
         </div>
       )}
     </li>
+  );
+}
+
+type HouseholdBudget = {
+  category: string;
+  monthlyLimit: number;
+  spentThisMonth: number;
+};
+
+function budgetBarColor(pct: number) {
+  if (pct >= 100) return "var(--color-negative)";
+  if (pct >= 80) return "var(--color-accent)";
+  return "var(--color-positive)";
+}
+
+function HouseholdBudgets({ refreshKey }: { refreshKey: number }) {
+  const [budgets, setBudgets] = useState<HouseholdBudget[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAdding, setIsAdding] = useState(false);
+  const [newCategory, setNewCategory] = useState("");
+  const [newLimit, setNewLimit] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  async function loadBudgets() {
+    const res = await fetch("/api/budgets");
+    const data = await res.json();
+    setBudgets(data.budgets ?? []);
+    setIsLoading(false);
+  }
+
+  useEffect(() => {
+    // Carga inicial y cada vez que cambia la cantidad de gastos (para
+    // reflejar cuánto se lleva gastado del presupuesto del mes en curso).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadBudgets();
+  }, [refreshKey]);
+
+  const categoriesWithoutBudget = EXPENSE_CATEGORIES.filter(
+    (c) => !budgets.some((b) => b.category === c)
+  );
+
+  async function handleAdd(event: FormEvent) {
+    event.preventDefault();
+    if (!newCategory) return;
+    setError(null);
+    setIsSaving(true);
+    try {
+      const res = await fetch(`/api/budgets/${newCategory}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ monthlyLimit: Number(newLimit) }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error ?? "No se pudo guardar el presupuesto");
+        return;
+      }
+
+      setNewCategory("");
+      setNewLimit("");
+      setIsAdding(false);
+      await loadBudgets();
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleRemove(category: string) {
+    if (!confirm(`¿Quitar el presupuesto de "${category}"?`)) return;
+    await fetch(`/api/budgets/${category}`, { method: "DELETE" });
+    await loadBudgets();
+  }
+
+  if (isLoading) return null;
+
+  return (
+    <div className="rounded-2xl border border-rule bg-surface p-4">
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] font-bold uppercase tracking-wide text-ink-soft">
+          Presupuestos del mes
+        </span>
+        {!isAdding && categoriesWithoutBudget.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              setNewCategory(categoriesWithoutBudget[0]);
+              setIsAdding(true);
+            }}
+            className="text-xs font-semibold text-accent"
+          >
+            Agregar
+          </button>
+        )}
+      </div>
+
+      {budgets.length === 0 && !isAdding && (
+        <p className="mt-2 text-xs text-ink-soft">
+          Aún no hay presupuestos definidos por categoría.
+        </p>
+      )}
+
+      <ul className="mt-2 flex flex-col gap-3">
+        {budgets.map((b) => {
+          const pct = Math.min((b.spentThisMonth / b.monthlyLimit) * 100, 100);
+          return (
+            <li key={b.category} className="flex flex-col gap-1">
+              <div className="flex items-baseline justify-between text-xs">
+                <span className="font-semibold text-ink">{b.category}</span>
+                <span className="font-tabular text-ink-soft">
+                  {formatCurrency(b.spentThisMonth)} / {formatCurrency(b.monthlyLimit)}
+                </span>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-rule">
+                <div
+                  className="h-1.5 rounded-full"
+                  style={{ width: `${pct}%`, background: budgetBarColor(pct) }}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => handleRemove(b.category)}
+                className="self-start text-[11px] font-semibold text-ink-soft hover:text-negative"
+              >
+                Quitar
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+
+      {isAdding && (
+        <form onSubmit={handleAdd} className="mt-3 flex flex-col gap-2">
+          <div className="flex gap-2">
+            <select
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+              className="flex-1 rounded-xl border border-rule bg-surface px-3 py-2.5 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-soft"
+            >
+              {categoriesWithoutBudget.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+            <MoneyInput className="w-28" value={newLimit} onChange={setNewLimit} />
+          </div>
+          {error && <p className="text-xs font-semibold text-negative">{error}</p>}
+          <div className="flex gap-2">
+            <Button type="submit" disabled={isSaving || !newCategory} className="px-3 py-1.5 text-xs">
+              {isSaving ? "Guardando…" : "Guardar"}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setIsAdding(false)}
+              className="px-3 py-1.5 text-xs"
+            >
+              Cancelar
+            </Button>
+          </div>
+        </form>
+      )}
+    </div>
   );
 }
