@@ -34,6 +34,7 @@ export function ExpensesView({
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [monthFilter, setMonthFilter] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   async function loadExpenses() {
@@ -67,9 +68,25 @@ export function ExpensesView({
     });
   }, [expenses]);
 
-  const visibleExpenses = categoryFilter
-    ? expenses.filter((e) => e.category?.name === categoryFilter)
-    : expenses;
+  const monthOptions = useMemo(() => {
+    const keys = new Set(
+      expenses.map((e) => {
+        const d = new Date(e.date);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      })
+    );
+    return Array.from(keys).sort().reverse();
+  }, [expenses]);
+
+  const visibleExpenses = expenses.filter((e) => {
+    if (categoryFilter && e.category?.name !== categoryFilter) return false;
+    if (monthFilter) {
+      const d = new Date(e.date);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      if (key !== monthFilter) return false;
+    }
+    return true;
+  });
 
   async function handleAdd(event: FormEvent) {
     event.preventDefault();
@@ -125,14 +142,32 @@ export function ExpensesView({
 
       {error && <p className="text-sm font-semibold text-negative">{error}</p>}
 
-      {categoriesInUse.length > 0 && (
+      {(categoriesInUse.length > 0 || monthOptions.length > 1) && (
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-ink-soft">Filtrar:</span>
-          <CategorySelect
-            className="flex-1"
-            value={categoryFilter}
-            onChange={setCategoryFilter}
-          />
+          <div className="flex flex-1 gap-2">
+            {monthOptions.length > 1 && (
+              <select
+                value={monthFilter}
+                onChange={(e) => setMonthFilter(e.target.value)}
+                className="flex-1 rounded-xl border border-rule bg-surface px-3 py-2.5 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-soft"
+              >
+                <option value="">Todos los meses</option>
+                {monthOptions.map((key) => (
+                  <option key={key} value={key}>
+                    {formatMonthLabel(key)}
+                  </option>
+                ))}
+              </select>
+            )}
+            {categoriesInUse.length > 0 && (
+              <CategorySelect
+                className="flex-1"
+                value={categoryFilter}
+                onChange={setCategoryFilter}
+              />
+            )}
+          </div>
         </div>
       )}
 
@@ -140,7 +175,9 @@ export function ExpensesView({
         <p className="text-sm text-ink-soft">Cargando…</p>
       ) : visibleExpenses.length === 0 ? (
         <p className="text-sm text-ink-soft">
-          {categoryFilter ? "No hay gastos en esta categoría." : "Aún no hay gastos registrados."}
+          {categoryFilter || monthFilter
+            ? "No hay gastos que coincidan con el filtro."
+            : "Aún no hay gastos registrados."}
         </p>
       ) : (
         <ul className="flex flex-col gap-3">
@@ -306,6 +343,14 @@ function ExpenseRow({
       )}
     </li>
   );
+}
+
+function formatMonthLabel(key: string) {
+  const [year, month] = key.split("-").map(Number);
+  const label = new Intl.DateTimeFormat("es-ES", { month: "long", year: "numeric" }).format(
+    new Date(year, month - 1, 1)
+  );
+  return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
 const SUMMARY_BAR_COLORS = [
