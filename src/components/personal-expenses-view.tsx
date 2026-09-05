@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
@@ -89,6 +90,9 @@ export function PersonalExpensesView({ monthlyIncome }: { monthlyIncome: number 
         <p className="text-xs font-semibold text-ink-soft">
           Privado — nadie más ve esta información
         </p>
+        <Link href="/personal/bills" className="mt-1 inline-block text-xs font-semibold text-accent">
+          Ver pagos recurrentes personales →
+        </Link>
       </div>
 
       <BalanceCard
