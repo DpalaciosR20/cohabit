@@ -59,6 +59,14 @@ export function ExpensesView({
     [expenses]
   );
 
+  const expensesThisMonth = useMemo(() => {
+    const now = new Date();
+    return expenses.filter((e) => {
+      const d = new Date(e.date);
+      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    });
+  }, [expenses]);
+
   const visibleExpenses = categoryFilter
     ? expenses.filter((e) => e.category?.name === categoryFilter)
     : expenses;
@@ -95,6 +103,8 @@ export function ExpensesView({
         <h1 className="text-xl font-extrabold tracking-tight text-ink">Gastos</h1>
         <p className="text-xs font-semibold text-ink-soft">{householdName}</p>
       </div>
+
+      <SpendingSummary expensesThisMonth={expensesThisMonth} />
 
       <HouseholdBudgets refreshKey={expenses.length} />
 
@@ -295,6 +305,72 @@ function ExpenseRow({
         </div>
       )}
     </li>
+  );
+}
+
+const SUMMARY_BAR_COLORS = [
+  "var(--color-accent)",
+  "var(--color-partner)",
+  "var(--color-positive)",
+  "#C79A2E",
+  "#B23B7A",
+  "#0F9AA6",
+  "#4B5563",
+  "#E0562B",
+  "var(--color-ink-soft)",
+];
+
+function SpendingSummary({ expensesThisMonth }: { expensesThisMonth: Expense[] }) {
+  const total = expensesThisMonth.reduce((sum, e) => sum + Number(e.amount), 0);
+
+  const categoryTotals = new Map<string, number>();
+  for (const e of expensesThisMonth) {
+    const name = e.category?.name ?? "Sin categoría";
+    categoryTotals.set(name, (categoryTotals.get(name) ?? 0) + Number(e.amount));
+  }
+  const byCategory = Array.from(categoryTotals.entries())
+    .map(([category, amount]) => ({ category, amount }))
+    .sort((a, b) => b.amount - a.amount);
+
+  if (total === 0) return null;
+
+  return (
+    <div className="rounded-2xl border border-rule bg-surface p-4">
+      <span className="text-[11px] font-bold uppercase tracking-wide text-ink-soft">
+        Resumen del mes
+      </span>
+      <div className="mt-1.5 font-tabular text-2xl font-semibold leading-none tracking-tight text-ink">
+        {formatCurrency(total)}
+      </div>
+
+      <div className="mt-3.5 flex h-2.5 overflow-hidden rounded-full bg-rule">
+        {byCategory.map((c, i) => (
+          <div
+            key={c.category}
+            style={{
+              width: `${(c.amount / total) * 100}%`,
+              background: SUMMARY_BAR_COLORS[i % SUMMARY_BAR_COLORS.length],
+            }}
+          />
+        ))}
+      </div>
+
+      <ul className="mt-3 flex flex-col gap-1.5">
+        {byCategory.map((c, i) => (
+          <li key={c.category} className="flex items-center gap-2 text-xs">
+            <span
+              className="h-2 w-2 flex-none rounded-full"
+              style={{ background: SUMMARY_BAR_COLORS[i % SUMMARY_BAR_COLORS.length] }}
+            />
+            <span className="flex-1 font-semibold text-ink-soft">{c.category}</span>
+            <span className="font-tabular font-semibold text-ink">{formatCurrency(c.amount)}</span>
+            <span className="w-10 text-right text-[11px] text-ink-soft">
+              {((c.amount / total) * 100).toFixed(0)}%
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
