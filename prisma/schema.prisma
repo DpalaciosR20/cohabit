@@ -64,6 +64,7 @@ model User {
   settlementsReceived Settlement[]      @relation("SettlementTo")
   personalExpenses    PersonalExpense[]
   personalBudgets     PersonalBudget[]
+  personalBills       PersonalBill[]
 }
 
 model Household {
@@ -244,10 +245,32 @@ model PersonalExpense {
   description String
   amount      Decimal  @db.Decimal(10, 2)
   category    String?
+  /// Si este gasto viene de marcar un PersonalBill como pagado.
+  billId      String?
   date        DateTime @default(now())
   createdAt   DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bill PersonalBill? @relation(fields: [billId], references: [id])
+}
+
+/// Igual que Bill, pero a nivel personal — sin householdId, sin split,
+/// nadie más lo ve. Marcar como pagado genera un PersonalExpense.
+model PersonalBill {
+  id                    String   @id @default(cuid())
+  userId                String
+  name                  String
+  amount                Decimal  @db.Decimal(10, 2)
+  dueDay                Int
+  category              String?
+  installmentsRemaining Int?
+  totalInstallments     Int?
+  startsAt              DateTime @default(now())
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments PersonalExpense[]
 }
 
 /// Límite mensual que el usuario se pone para una categoría de sus gastos
