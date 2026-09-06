@@ -8,6 +8,12 @@ type NavItem = {
   href: string;
   label: string;
   icon: (active: boolean) => ReactNode;
+  // Rutas legadas que hoy redirigen a este destino (ver finance/page.tsx y
+  // profile/page.tsx): el navegador termina en la ruta legada, no en `href`,
+  // así que sin esto el tab no se marcaría activo. Se quita cuando las PRs
+  // siguientes del roadmap de rediseño reemplacen los shells por contenido
+  // real servido directamente en `href`.
+  activePrefixes?: string[];
 };
 
 const ICON_PROPS = (active: boolean) => ({
@@ -43,8 +49,9 @@ const NAV_ITEMS: NavItem[] = [
     ),
   },
   {
-    href: "/expenses",
-    label: "Gastos",
+    href: "/finance",
+    label: "Finanzas",
+    activePrefixes: ["/expenses", "/balance", "/bills", "/personal"],
     icon: (active) => (
       <svg {...ICON_PROPS(active)}>
         <path d="M7 3h10v18l-2.5-1.5L12 21l-2.5-1.5L7 21V3Z" />
@@ -53,21 +60,13 @@ const NAV_ITEMS: NavItem[] = [
     ),
   },
   {
-    href: "/balance",
-    label: "Balance",
+    href: "/profile",
+    label: "Perfil",
+    activePrefixes: ["/household/members"],
     icon: (active) => (
       <svg {...ICON_PROPS(active)}>
-        <path d="M12 3v18M6 8l-3 5a3 3 0 0 0 6 0l-3-5Zm12 0l-3 5a3 3 0 0 0 6 0l-3-5ZM4 8h5M15 8h5" />
-      </svg>
-    ),
-  },
-  {
-    href: "/bills",
-    label: "Pagos",
-    icon: (active) => (
-      <svg {...ICON_PROPS(active)}>
-        <rect x="4" y="5" width="16" height="16" rx="3" />
-        <path d="M4 10h16M8 3v4M16 3v4" />
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 20c0-3.9 3.6-7 8-7s8 3.1 8 7" />
       </svg>
     ),
   },
@@ -82,7 +81,9 @@ export function BottomNav() {
       style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)" }}
     >
       {NAV_ITEMS.map((item) => {
-        const active = pathname === item.href;
+        const active =
+          pathname === item.href ||
+          (item.activePrefixes?.some((prefix) => pathname.startsWith(prefix)) ?? false);
         return (
           <Link
             key={item.href}
