@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
 import { MoneyInput } from "@/components/ui/money-input";
 import { CategorySelect } from "@/components/ui/category-select";
+import { Fab } from "@/components/ui/fab";
+import { AddExpenseSheet } from "@/components/add-expense-sheet";
 import { formatCurrency } from "@/lib/format-currency";
 import { EXPENSE_CATEGORIES } from "@/lib/expense-categories";
 
@@ -30,12 +32,9 @@ export function ExpensesView({
 }) {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [description, setDescription] = useState("");
-  const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [monthFilter, setMonthFilter] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [isAddOpen, setIsAddOpen] = useState(false);
 
   async function loadExpenses() {
     const res = await fetch("/api/expenses");
@@ -88,32 +87,6 @@ export function ExpensesView({
     return true;
   });
 
-  async function handleAdd(event: FormEvent) {
-    event.preventDefault();
-    setError(null);
-
-    const res = await fetch("/api/expenses", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        description,
-        amount: Number(amount),
-        category: category || null,
-      }),
-    });
-
-    if (!res.ok) {
-      const data = await res.json();
-      setError(data.error ?? "No se pudo registrar el gasto");
-      return;
-    }
-
-    setDescription("");
-    setAmount("");
-    setCategory("");
-    await loadExpenses();
-  }
-
   return (
     <main className="mx-auto flex max-w-md flex-col gap-5 p-5">
       <div>
@@ -125,22 +98,10 @@ export function ExpensesView({
 
       <HouseholdBudgets refreshKey={expenses.length} />
 
-      <form onSubmit={handleAdd} className="flex flex-col gap-3">
-        <TextField
-          type="text"
-          placeholder="Descripción (ej. Supermercado)"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          required
-        />
-        <div className="flex gap-2">
-          <MoneyInput className="flex-1" value={amount} onChange={setAmount} />
-          <Button type="submit">Registrar</Button>
-        </div>
-        <CategorySelect value={category} onChange={setCategory} />
-      </form>
-
-      {error && <p className="text-sm font-semibold text-negative">{error}</p>}
+      <Fab onClick={() => setIsAddOpen(true)} label="Agregar gasto" />
+      {isAddOpen && (
+        <AddExpenseSheet onClose={() => setIsAddOpen(false)} onAdded={loadExpenses} />
+      )}
 
       {(categoriesInUse.length > 0 || monthOptions.length > 1) && (
         <div className="flex items-center gap-2">
