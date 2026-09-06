@@ -5,6 +5,8 @@ import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
 import { MoneyInput } from "@/components/ui/money-input";
+import { ProfileSettingsButton } from "@/components/profile-settings-button";
+import { SignOutButton } from "@/components/sign-out-button";
 import { PROFILE_COLOR_HEX, type ProfileColor } from "@/lib/profile-colors";
 import { formatCurrency } from "@/lib/format-currency";
 
@@ -34,6 +36,7 @@ export function HouseholdMembersView({
   currentUserRole,
   myMonthlyIncome,
   members,
+  account,
 }: {
   householdName: string;
   targetMemberCount: number | null;
@@ -42,6 +45,10 @@ export function HouseholdMembersView({
   currentUserRole: HouseholdRole;
   myMonthlyIncome: number | null;
   members: Member[];
+  // Presente solo desde el tab Perfil (ver profile/page.tsx) — la ruta
+  // legada /household/members sigue sin esta sección, sin cambio de
+  // comportamiento para ella.
+  account?: { inviteCode: string; myColor: ProfileColor };
 }) {
   const router = useRouter();
   const [busyUserId, setBusyUserId] = useState<string | null>(null);
@@ -81,7 +88,9 @@ export function HouseholdMembersView({
   return (
     <main className="mx-auto flex max-w-md flex-col gap-5 p-5">
       <div>
-        <h1 className="text-xl font-extrabold tracking-tight text-ink">Miembros del hogar</h1>
+        <h1 className="text-xl font-extrabold tracking-tight text-ink">
+          {account ? "Perfil" : "Miembros del hogar"}
+        </h1>
         <HouseholdNameEditor
           householdName={householdName}
           targetMemberCount={targetMemberCount}
@@ -99,7 +108,7 @@ export function HouseholdMembersView({
           return (
             <li
               key={member.userId}
-              className="flex items-center gap-3 rounded-2xl border border-rule bg-surface px-4 py-3.5"
+              className="flex items-center gap-3 rounded-card border border-rule bg-surface px-4 py-3.5 shadow-card"
             >
               <div
                 className="flex h-9 w-9 flex-none items-center justify-center rounded-full text-sm font-bold text-white"
@@ -152,13 +161,28 @@ export function HouseholdMembersView({
         onChanged={() => router.refresh()}
       />
 
-      <Button
-        type="button"
-        variant="secondary"
-        onClick={() => router.push("/")}
-      >
-        Volver al inicio
-      </Button>
+      {account ? (
+        <div className="flex flex-col gap-3 rounded-card border border-rule bg-surface p-4 shadow-card">
+          <span className="text-[11px] font-bold uppercase tracking-wide text-ink-soft">
+            Tu cuenta
+          </span>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-semibold text-ink">Color de perfil</span>
+            <ProfileSettingsButton initialColor={account.myColor} />
+          </div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-ink-soft">Código de invitación</span>
+            <span className="font-tabular font-semibold text-ink">{account.inviteCode}</span>
+          </div>
+          <div className="border-t border-rule pt-3">
+            <SignOutButton />
+          </div>
+        </div>
+      ) : (
+        <Button type="button" variant="secondary" onClick={() => router.push("/")}>
+          Volver al inicio
+        </Button>
+      )}
     </main>
   );
 }
@@ -274,7 +298,7 @@ function SplitConfig({
   }
 
   return (
-    <div className="rounded-2xl border border-rule bg-surface p-4">
+    <div className="rounded-card border border-rule bg-surface p-4 shadow-card">
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-bold uppercase tracking-wide text-ink-soft">
           Cómo se reparten los gastos

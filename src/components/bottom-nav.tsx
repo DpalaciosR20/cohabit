@@ -8,12 +8,6 @@ type NavItem = {
   href: string;
   label: string;
   icon: (active: boolean) => ReactNode;
-  // Rutas legadas que hoy redirigen a este destino (ver profile/page.tsx):
-  // el navegador termina en la ruta legada, no en `href`, así que sin esto
-  // el tab no se marcaría activo. Se quita cuando la PR de Perfil del
-  // roadmap de rediseño reemplace el shell por contenido real servido
-  // directamente en `href`.
-  activePrefixes?: string[];
 };
 
 const ICON_PROPS = (active: boolean) => ({
@@ -61,7 +55,6 @@ const NAV_ITEMS: NavItem[] = [
   {
     href: "/profile",
     label: "Perfil",
-    activePrefixes: ["/household/members"],
     icon: (active) => (
       <svg {...ICON_PROPS(active)}>
         <circle cx="12" cy="8" r="4" />
@@ -80,9 +73,7 @@ export function BottomNav() {
       style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)" }}
     >
       {NAV_ITEMS.map((item) => {
-        const active =
-          pathname === item.href ||
-          (item.activePrefixes?.some((prefix) => pathname.startsWith(prefix)) ?? false);
+        const active = pathname === item.href;
         return (
           <Link
             key={item.href}
