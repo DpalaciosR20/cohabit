@@ -5,6 +5,7 @@ import { getUserHouseholdMembership } from "@/lib/households";
 import { getHouseholdBalances } from "@/lib/get-household-balances";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ProfileSettingsButton } from "@/components/profile-settings-button";
+import { HomeFab } from "@/components/home-fab";
 import { Button } from "@/components/ui/button";
 import { PROFILE_COLOR_HEX } from "@/lib/profile-colors";
 import { formatCurrency } from "@/lib/format-currency";
@@ -51,32 +52,18 @@ export default async function Home() {
   }
 
   const householdId = membership.householdId;
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
 
-  const [members, paidTotals, pendingItems, expensesThisMonth, activeBills, personalExpensesThisMonth] =
-    await Promise.all([
-      prisma.householdMember.findMany({
-        where: { householdId },
-        include: { user: { select: { id: true, name: true, color: true } } },
-      }),
-      prisma.expense.groupBy({
-        by: ["paidById"],
-        where: { householdId },
-        _sum: { amount: true },
-      }),
-      prisma.shoppingItem.count({
-        where: { list: { householdId }, isPurchased: false },
-      }),
-      prisma.expense.count({
-        where: { householdId, date: { gte: startOfMonth } },
-      }),
-      prisma.bill.count({ where: { householdId, isActive: true } }),
-      prisma.personalExpense.count({
-        where: { userId: session.user.id, date: { gte: startOfMonth } },
-      }),
-    ]);
+  const [members, paidTotals] = await Promise.all([
+    prisma.householdMember.findMany({
+      where: { householdId },
+      include: { user: { select: { id: true, name: true, color: true } } },
+    }),
+    prisma.expense.groupBy({
+      by: ["paidById"],
+      where: { householdId },
+      _sum: { amount: true },
+    }),
+  ]);
 
   const balances = await getHouseholdBalances(householdId);
   const myBalance = balances.find((b) => b.userId === session.user.id)?.balance ?? 0;
@@ -171,82 +158,7 @@ export default async function Home() {
         )}
       </div>
 
-      <div className="mx-5 h-px bg-rule" />
-
-      <div className="flex flex-col px-5">
-        <span className="pb-1.5 text-[11px] font-bold uppercase tracking-wide text-ink-soft">
-          Secciones
-        </span>
-
-        <Link
-          href="/shopping-list"
-          className="flex items-center gap-3 border-b border-rule py-3"
-        >
-          <span className="flex h-8 w-8 flex-none items-center justify-center rounded-[9px] bg-accent-soft">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 8h12l-1 12H7L6 8Z" />
-              <path d="M9 8V6a3 3 0 0 1 6 0v2" />
-            </svg>
-          </span>
-          <span className="flex-1 text-sm font-semibold">Lista de compras</span>
-          <span className="font-tabular text-xs text-ink-soft">{pendingItems}</span>
-        </Link>
-
-        <Link href="/expenses" className="flex items-center gap-3 border-b border-rule py-3">
-          <span className="flex h-8 w-8 flex-none items-center justify-center rounded-[9px] bg-accent-soft">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M7 3h10v18l-2.5-1.5L12 21l-2.5-1.5L7 21V3Z" />
-              <path d="M9.5 8h5M9.5 11.5h5" />
-            </svg>
-          </span>
-          <span className="flex-1 text-sm font-semibold">Gastos</span>
-          <span className="font-tabular text-xs text-ink-soft">{expensesThisMonth} · mes</span>
-        </Link>
-
-        <Link
-          href="/bills"
-          className="flex items-center gap-3 border-b border-rule py-3"
-        >
-          <span className="flex h-8 w-8 flex-none items-center justify-center rounded-[9px] bg-accent-soft">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="4" y="5" width="16" height="16" rx="3" />
-              <path d="M4 10h16M8 3v4M16 3v4" />
-            </svg>
-          </span>
-          <span className="flex-1 text-sm font-semibold">Pagos recurrentes</span>
-          <span className="font-tabular text-xs text-ink-soft">{activeBills}</span>
-        </Link>
-
-        <Link
-          href="/household/members"
-          className="flex items-center gap-3 border-b border-rule py-3"
-        >
-          <span className="flex h-8 w-8 flex-none items-center justify-center rounded-[9px] bg-accent-soft">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
-              <circle cx="10" cy="7" r="4" />
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-          </span>
-          <span className="flex-1 text-sm font-semibold">Miembros del hogar</span>
-          <span className="font-tabular text-xs text-ink-soft">{members.length}</span>
-        </Link>
-
-        <Link href="/personal" className="flex items-center gap-3 py-3">
-          <span className="flex h-8 w-8 flex-none items-center justify-center rounded-[9px] bg-accent-soft">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 7v5l3 3" />
-            </svg>
-          </span>
-          <span className="flex-1 text-sm font-semibold">Gastos personales</span>
-          <span className="font-tabular text-xs text-ink-soft">{personalExpensesThisMonth} · mes</span>
-        </Link>
-      </div>
-
-      <div className="px-5 text-[11.5px] text-ink-soft">
-        Código: <span className="font-tabular text-ink">{membership.household.inviteCode}</span>
-      </div>
+      <HomeFab />
     </main>
   );
 }
