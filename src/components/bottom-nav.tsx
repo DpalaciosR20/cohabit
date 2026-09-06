@@ -78,7 +78,7 @@ export function BottomNav() {
 
   return (
     <nav
-      className="sticky bottom-0 flex items-center justify-around border-t border-rule bg-surface px-2 pt-2"
+      className="glass sticky bottom-0 flex items-center justify-around rounded-t-card border-t px-2 pt-2 backdrop-blur-xl"
       style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)" }}
     >
       {NAV_ITEMS.map((item) => {
@@ -87,7 +87,9 @@ export function BottomNav() {
           <Link
             key={item.href}
             href={item.href}
-            className="flex flex-col items-center gap-1 px-2.5 py-1"
+            className={`flex flex-col items-center gap-1 rounded-control px-3 py-1.5 transition-colors duration-200 ${
+              active ? "bg-accent-soft" : ""
+            }`}
           >
             {item.icon(active)}
             <span

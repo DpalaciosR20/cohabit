@@ -8,7 +8,7 @@ export function TextField({ label, className = "", id, ...props }: TextFieldProp
   const input = (
     <input
       id={id}
-      className={`rounded-xl border border-rule bg-surface px-3 py-2.5 text-sm text-ink placeholder:text-ink-soft focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-soft ${className}`}
+      className={`rounded-control border border-rule bg-surface px-3 py-2.5 text-sm text-ink placeholder:text-ink-soft transition-[border-color,box-shadow] duration-150 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-soft ${className}`}
       {...props}
     />
   );
