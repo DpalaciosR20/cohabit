@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
 import { MoneyInput } from "@/components/ui/money-input";
 import { CategorySelect } from "@/components/ui/category-select";
+import { SwipeableRow } from "@/components/ui/swipeable-row";
 import { Fab } from "@/components/ui/fab";
 import { AddExpenseSheet } from "@/components/add-expense-sheet";
 import { formatCurrency } from "@/lib/format-currency";
@@ -196,7 +197,6 @@ function ExpenseRow({
   }
 
   async function handleDelete() {
-    if (!confirm(`¿Eliminar el gasto "${expense.description}"?`)) return;
     await fetch(`/api/expenses/${expense.id}`, { method: "DELETE" });
     await onChanged();
   }
@@ -233,7 +233,11 @@ function ExpenseRow({
   }
 
   return (
-    <li className="rounded-card border border-rule bg-surface px-4 py-3 shadow-card">
+    <SwipeableRow
+      onDelete={handleDelete}
+      className="rounded-card border border-rule shadow-card"
+      contentClassName="px-4 py-3"
+    >
       <button
         type="button"
         onClick={() => setIsExpanded((v) => !v)}
@@ -292,17 +296,10 @@ function ExpenseRow({
             >
               Editar
             </button>
-            <button
-              type="button"
-              onClick={handleDelete}
-              className="text-ink-soft hover:text-negative"
-            >
-              Eliminar
-            </button>
           </div>
         </div>
       )}
-    </li>
+    </SwipeableRow>
   );
 }
 
@@ -447,7 +444,6 @@ function HouseholdBudgets({ refreshKey }: { refreshKey: number }) {
   }
 
   async function handleRemove(category: string) {
-    if (!confirm(`¿Quitar el presupuesto de "${category}"?`)) return;
     await fetch(`/api/budgets/${category}`, { method: "DELETE" });
     await loadBudgets();
   }
@@ -484,7 +480,11 @@ function HouseholdBudgets({ refreshKey }: { refreshKey: number }) {
         {budgets.map((b) => {
           const pct = Math.min((b.spentThisMonth / b.monthlyLimit) * 100, 100);
           return (
-            <li key={b.category} className="flex flex-col gap-1">
+            <SwipeableRow
+              key={b.category}
+              onDelete={() => handleRemove(b.category)}
+              contentClassName="flex flex-col gap-1 py-0.5"
+            >
               <div className="flex items-baseline justify-between text-xs">
                 <span className="font-semibold text-ink">{b.category}</span>
                 <span className="font-tabular text-ink-soft">
@@ -497,14 +497,7 @@ function HouseholdBudgets({ refreshKey }: { refreshKey: number }) {
                   style={{ width: `${pct}%`, background: budgetBarColor(pct) }}
                 />
               </div>
-              <button
-                type="button"
-                onClick={() => handleRemove(b.category)}
-                className="self-start text-[11px] font-semibold text-ink-soft hover:text-negative"
-              >
-                Quitar
-              </button>
-            </li>
+            </SwipeableRow>
           );
         })}
       </ul>
