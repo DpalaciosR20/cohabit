@@ -51,7 +51,7 @@ export function ProfileColorSheet({
       onClick={onClose}
     >
       <div
-        className="flex flex-col gap-4 rounded-t-[20px] border-t border-rule bg-surface px-5 pb-7 pt-2.5 shadow-[0_-8px_30px_-10px_rgba(20,23,28,0.25)]"
+        className="glass-strong flex flex-col gap-4 rounded-t-card border-t px-5 pb-7 pt-2.5 backdrop-blur-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mx-auto h-1 w-9 rounded-full bg-rule" />
