@@ -1,10 +1,60 @@
 import { redirect } from "next/navigation";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { getUserHouseholdMembership } from "@/lib/households";
+import { getHouseholdBalances } from "@/lib/get-household-balances";
+import { HouseholdMembersView } from "@/components/household-members-view";
 
-// Shell temporal: el tab "Perfil" del bottom nav ya apunta aquí, pero la
-// fusión real (miembros del hogar + color de perfil + código de invitación +
-// cerrar sesión) se construye en una PR posterior del roadmap de rediseño de
-// navegación. Mientras tanto, redirige a la vista de miembros existente para
-// que el tab nunca lleve a una página rota.
-export default function ProfilePage() {
-  redirect("/household/members");
+export default async function ProfilePage() {
+  const session = await auth();
+  if (!session?.user) {
+    redirect("/signin");
+  }
+
+  const membership = await getUserHouseholdMembership(session.user.id);
+  if (!membership) {
+    redirect("/household");
+  }
+
+  const householdId = membership.householdId;
+
+  const [members, balances] = await Promise.all([
+    prisma.householdMember.findMany({
+      where: { householdId },
+      include: {
+        user: { select: { id: true, name: true, color: true, monthlyIncome: true } },
+      },
+      orderBy: { joinedAt: "asc" },
+    }),
+    getHouseholdBalances(householdId),
+  ]);
+
+  const balanceByUserId = new Map(balances.map((b) => [b.userId, b.balance]));
+  const me = members.find((m) => m.userId === session.user.id);
+  const myIncome = me?.user.monthlyIncome;
+
+  return (
+    <HouseholdMembersView
+      householdName={membership.household.name}
+      targetMemberCount={membership.household.targetMemberCount}
+      splitMode={membership.household.splitMode}
+      currentUserId={session.user.id}
+      currentUserRole={me?.role ?? "MEMBER"}
+      myMonthlyIncome={myIncome !== null && myIncome !== undefined ? Number(myIncome) : null}
+      members={members.map((m) => ({
+        userId: m.userId,
+        name: m.user.name,
+        color: m.user.color,
+        role: m.role,
+        balance: balanceByUserId.get(m.userId) ?? 0,
+        splitPercent: m.splitPercent !== null ? Number(m.splitPercent) : null,
+        // Nunca se expone el ingreso de nadie más, solo si ya lo registró.
+        hasIncome: m.user.monthlyIncome !== null,
+      }))}
+      account={{
+        inviteCode: membership.household.inviteCode,
+        myColor: me?.user.color ?? "INDIGO",
+      }}
+    />
+  );
 }
