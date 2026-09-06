@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
 import { MoneyInput } from "@/components/ui/money-input";
 import { CategorySelect } from "@/components/ui/category-select";
+import { SwipeableRow } from "@/components/ui/swipeable-row";
 import { formatCurrency } from "@/lib/format-currency";
 
 type Bill = {
@@ -328,7 +329,6 @@ function BillRow({ bill, onChanged }: { bill: Bill; onChanged: () => Promise<voi
   }
 
   async function handleDelete() {
-    if (!confirm(`¿Eliminar "${bill.name}"?`)) return;
     const res = await fetch(`/api/bills/${bill.id}`, { method: "DELETE" });
     if (!res.ok) {
       const data = await res.json();
@@ -339,7 +339,7 @@ function BillRow({ bill, onChanged }: { bill: Bill; onChanged: () => Promise<voi
   }
 
   return (
-    <li className="rounded-2xl border border-rule bg-surface px-4 py-3.5">
+    <SwipeableRow onDelete={handleDelete} className="rounded-card border border-rule shadow-card">
       <div className="flex items-baseline justify-between gap-2">
         <p className="flex items-center gap-1.5 text-sm font-bold text-ink">
           {bill.name}
@@ -455,15 +455,8 @@ function BillRow({ bill, onChanged }: { bill: Bill; onChanged: () => Promise<voi
           >
             Editar
           </button>
-          <button
-            type="button"
-            onClick={handleDelete}
-            className="text-ink-soft hover:text-negative"
-          >
-            Eliminar
-          </button>
         </div>
       )}
-    </li>
+    </SwipeableRow>
   );
 }
