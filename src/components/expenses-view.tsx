@@ -150,7 +150,7 @@ export function ExpensesView({
               <select
                 value={monthFilter}
                 onChange={(e) => setMonthFilter(e.target.value)}
-                className="flex-1 rounded-xl border border-rule bg-surface px-3 py-2.5 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-soft"
+                className="flex-1 rounded-control border border-rule bg-surface px-3 py-2.5 text-sm text-ink transition-[border-color,box-shadow] duration-150 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-soft"
               >
                 <option value="">Todos los meses</option>
                 {monthOptions.map((key) => (
@@ -242,7 +242,7 @@ function ExpenseRow({
 
   if (isEditing) {
     return (
-      <li className="rounded-2xl border border-rule bg-surface px-4 py-3">
+      <li className="rounded-card border border-rule bg-surface px-4 py-3 shadow-card">
         <form onSubmit={handleSave} className="flex flex-col gap-2">
           <TextField
             type="text"
@@ -272,7 +272,7 @@ function ExpenseRow({
   }
 
   return (
-    <li className="rounded-2xl border border-rule bg-surface px-4 py-3">
+    <li className="rounded-card border border-rule bg-surface px-4 py-3 shadow-card">
       <button
         type="button"
         onClick={() => setIsExpanded((v) => !v)}
@@ -380,7 +380,7 @@ function SpendingSummary({ expensesThisMonth }: { expensesThisMonth: Expense[] }
   if (total === 0) return null;
 
   return (
-    <div className="rounded-2xl border border-rule bg-surface p-4">
+    <div className="rounded-card border border-rule bg-surface p-4 shadow-card">
       <span className="text-[11px] font-bold uppercase tracking-wide text-ink-soft">
         Resumen del mes
       </span>
@@ -494,7 +494,7 @@ function HouseholdBudgets({ refreshKey }: { refreshKey: number }) {
   if (isLoading) return null;
 
   return (
-    <div className="rounded-2xl border border-rule bg-surface p-4">
+    <div className="rounded-card border border-rule bg-surface p-4 shadow-card">
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-bold uppercase tracking-wide text-ink-soft">
           Presupuestos del mes
@@ -554,7 +554,7 @@ function HouseholdBudgets({ refreshKey }: { refreshKey: number }) {
             <select
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
-              className="flex-1 rounded-xl border border-rule bg-surface px-3 py-2.5 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-soft"
+              className="flex-1 rounded-control border border-rule bg-surface px-3 py-2.5 text-sm text-ink transition-[border-color,box-shadow] duration-150 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-soft"
             >
               {categoriesWithoutBudget.map((c) => (
                 <option key={c} value={c}>
