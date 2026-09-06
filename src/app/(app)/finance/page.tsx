@@ -1,10 +1,35 @@
 import { redirect } from "next/navigation";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { getUserHouseholdMembership } from "@/lib/households";
+import { FinanceView } from "@/components/finance-view";
 
-// Shell temporal: el tab "Finanzas" del bottom nav ya apunta aquí, pero la
-// composición real (switcher Hogar/Personal + pills Gastos/Presupuestos/
-// Pagos) se construye en la siguiente PR del roadmap de rediseño de
-// navegación. Mientras tanto, redirige a la vista de Gastos existente para
-// que el tab nunca lleve a una página rota.
-export default function FinancePage() {
-  redirect("/expenses");
+export default async function FinancePage() {
+  const session = await auth();
+  if (!session?.user) {
+    redirect("/signin");
+  }
+
+  const membership = await getUserHouseholdMembership(session.user.id);
+  if (!membership) {
+    redirect("/household");
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { monthlyIncome: true },
+  });
+
+  return (
+    <FinanceView
+      householdName={membership.household.name}
+      householdId={membership.householdId}
+      currentUserId={session.user.id}
+      monthlyIncome={
+        user?.monthlyIncome !== null && user?.monthlyIncome !== undefined
+          ? Number(user.monthlyIncome)
+          : null
+      }
+    />
+  );
 }
