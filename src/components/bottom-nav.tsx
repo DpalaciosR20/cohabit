@@ -8,11 +8,11 @@ type NavItem = {
   href: string;
   label: string;
   icon: (active: boolean) => ReactNode;
-  // Rutas legadas que hoy redirigen a este destino (ver finance/page.tsx y
-  // profile/page.tsx): el navegador termina en la ruta legada, no en `href`,
-  // así que sin esto el tab no se marcaría activo. Se quita cuando las PRs
-  // siguientes del roadmap de rediseño reemplacen los shells por contenido
-  // real servido directamente en `href`.
+  // Rutas legadas que hoy redirigen a este destino (ver profile/page.tsx):
+  // el navegador termina en la ruta legada, no en `href`, así que sin esto
+  // el tab no se marcaría activo. Se quita cuando la PR de Perfil del
+  // roadmap de rediseño reemplace el shell por contenido real servido
+  // directamente en `href`.
   activePrefixes?: string[];
 };
 
@@ -51,7 +51,6 @@ const NAV_ITEMS: NavItem[] = [
   {
     href: "/finance",
     label: "Finanzas",
-    activePrefixes: ["/expenses", "/balance", "/bills", "/personal"],
     icon: (active) => (
       <svg {...ICON_PROPS(active)}>
         <path d="M7 3h10v18l-2.5-1.5L12 21l-2.5-1.5L7 21V3Z" />
